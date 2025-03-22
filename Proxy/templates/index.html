@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="my-4">Upload Swagger JSON</h2>
+    
+    <form method="POST">
+        {{ form.hidden_tag() }} 
+    
+        <div class="mb-3">
+            <label class="form-label">API URL</label>  <!-- Updated label -->
+            {{ form.api_url(class="form-control", placeholder="Enter a valid URL (e.g., http://example.com)") }}  <!-- Updated field -->
+        </div>
+    
+        <div class="mb-3">
+            <label class="form-label">Swagger JSON</label>
+            {{ form.swagger_json(class="form-control", rows="5") }}
+        </div>
+    
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+    
+
+    <hr>
+
+    <h3>Uploaded APIs</h3>
+    <ul class="list-group">
+        {% for swagger in swaggers %}
+            <li class="list-group-item">
+                <a href="{{ url_for('swagger_details', id=swagger.id) }}">{{ swagger.api_url }}</a>  <!-- Updated field name -->
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
