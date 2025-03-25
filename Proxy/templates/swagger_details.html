@@ -2,8 +2,19 @@
 
 {% block content %}
 <div class="container">
-    <h2 class="my-4">{{ swagger.name }}</h2>
-    <h4>Endpoints</h4>
+    <h2 class="my-4">{{ swagger.api_url }}</h2>
+    <div>
+        <span class="badge bg-info fs-6">
+            UUID: {{ swagger.service_uuid }}
+            <button class="btn btn-sm btn-outline-light copy-uuid ms-2" 
+                   data-uuid="{{ swagger.service_uuid }}"
+                   title="Copy to clipboard">
+                <i class="bi bi-clipboard"></i>
+            </button>
+        </span>
+    </div>
+
+    <h4 class="mt-4">Endpoints</h4>
     
     <table class="table table-bordered">
         <thead>
@@ -15,16 +26,15 @@
         </thead>
         <tbody>
             {% for endpoint in endpoints %}
-                <tr id="endpoint-{{ endpoint.id }}">  <!-- Add an ID for each endpoint -->
+                <tr id="endpoint-{{ endpoint.id }}">
                     <td>{{ endpoint.path }}</td>
                     <td><span class="badge bg-primary">{{ endpoint.method }}</span></td>
                     <td>
-                        <table class="table">
+                        <table class="table table-sm">
                             <thead>
                                 <tr>
                                     <th>Name</th>
                                     <th>Type</th>
-                                    <th>Description</th>
                                     <th>Anonymization</th>
                                     <th>Action</th>
                                 </tr>
@@ -33,11 +43,21 @@
                                 {% for field in endpoint.fields %}
                                     <tr>
                                         <td>{{ field.name }}</td>
-                                        <td>{{ field.type }}</td>
-                                        <td>{{ field.description }}</td>
-                                        <td>{{ field.anonymization.anonymization_method.name if field.anonymization else "Not Set" }}</td>
+                                        <td>{{ field.data_type }}</td>
                                         <td>
-                                            <a href="{{ url_for('edit_anonymization', field_id=field.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                                            {% if field.anonymization and field.anonymization.anonymization_method %}
+                                                <span class="badge bg-warning text-dark">
+                                                    {{ field.anonymization.anonymization_method.name }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">None</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('edit_anonymization', field_id=field.id) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                Configure
+                                            </a>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -51,4 +71,21 @@
 
     <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
 </div>
+
+<script>
+// Copy UUID functionality
+const copyButton = document.querySelector('.copy-uuid');
+if (copyButton) {
+    copyButton.addEventListener('click', function() {
+        const uuid = this.getAttribute('data-uuid');
+        navigator.clipboard.writeText(uuid).then(() => {
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+            }, 2000);
+        });
+    });
+}
+</script>
 {% endblock %}

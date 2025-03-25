@@ -192,4 +192,4 @@ with open('static/swagger.json', 'w') as f:
     json.dump(swagger_json, f, indent=4)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=8080) 

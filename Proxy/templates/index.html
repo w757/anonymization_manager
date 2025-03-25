@@ -5,31 +5,82 @@
     <h2 class="my-4">Upload Swagger JSON</h2>
     
     <form method="POST">
-        {{ form.hidden_tag() }} 
+        {{ form.hidden_tag() }}
     
         <div class="mb-3">
-            <label class="form-label">API URL</label>  <!-- Updated label -->
-            {{ form.api_url(class="form-control", placeholder="Enter a valid URL (e.g., http://example.com)") }}  <!-- Updated field -->
+            <label class="form-label">API URL</label>
+            {{ form.api_url(class="form-control", placeholder="Enter API base URL") }}
         </div>
     
         <div class="mb-3">
             <label class="form-label">Swagger JSON</label>
-            {{ form.swagger_json(class="form-control", rows="5") }}
+            {{ form.swagger_json(class="form-control", rows="10", 
+                              placeholder="Paste your Swagger/OpenAPI JSON here") }}
+        </div>
+        
+        <div class="mb-3">
+            <label class="form-label">Service UUID</label>
+            <input type="text" class="form-control" value="{{ form.service_uuid.data }}" readonly>
+            <small class="text-muted">This unique identifier will be used to route requests</small>
         </div>
     
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
-    
 
     <hr>
 
-    <h3>Uploaded APIs</h3>
-    <ul class="list-group">
-        {% for swagger in swaggers %}
-            <li class="list-group-item">
-                <a href="{{ url_for('swagger_details', id=swagger.id) }}">{{ swagger.api_url }}</a>  <!-- Updated field name -->
-            </li>
-        {% endfor %}
-    </ul>
+    <h3>Configured APIs</h3>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>API URL</th>
+                    <th>Service UUID</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for swagger in swaggers %}
+                    <tr>
+                        <td>{{ swagger.api_url }}</td>
+                        <td>
+                            <code>{{ swagger.service_uuid }}</code>
+                            <button class="btn btn-sm btn-outline-secondary copy-uuid" 
+                                   data-uuid="{{ swagger.service_uuid }}"
+                                   title="Copy to clipboard">
+                                <i class="bi bi-clipboard"></i>
+                            </button>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('swagger_details', id=swagger.id) }}" 
+                               class="btn btn-sm btn-primary">Details</a>
+                            <form method="POST" action="{{ url_for('delete_swagger', id=swagger.id) }}" 
+                                  style="display: inline;">
+                                <button type="submit" class="btn btn-sm btn-danger"
+                                        onclick="return confirm('Are you sure?')">
+                                    Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+
+<script>
+document.querySelectorAll('.copy-uuid').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const uuid = this.getAttribute('data-uuid');
+        navigator.clipboard.writeText(uuid).then(() => {
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+            }, 2000);
+        });
+    });
+});
+</script>
 {% endblock %}
