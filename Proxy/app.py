@@ -23,13 +23,15 @@ def init_db():
 
 init_db()
 
-def process_schema_fields(endpoint_id, properties):
+def process_schema_fields(endpoint_id, properties, is_response=False):
+    """Process fields from both request and response schemas"""
     for field_name, field_info in properties.items():
         field = Field(
             endpoint_id=endpoint_id,
             name=field_name,
             data_type=field_info.get("type", "string"),
-            description=field_info.get("description", "")
+            description=field_info.get("description", ""),
+            is_response_field=is_response  # New flag to distinguish response fields
         )
         db.session.add(field)
         db.session.commit()
@@ -66,13 +68,33 @@ def index():
                         db.session.add(endpoint)
                         db.session.commit()
 
+                        # Process request parameters
                         if "parameters" in details:
                             for param in details["parameters"]:
                                 if param.get("in") == "body" and "schema" in param:
                                     process_schema_fields(
                                         endpoint.id,
-                                        param["schema"].get("properties", {})
+                                        param["schema"].get("properties", {}),
+                                        is_response=False
                                     )
+
+                        # Process response schemas
+                        if "responses" in details:
+                            for response_code, response in details["responses"].items():
+                                if "schema" in response:
+                                    if response["schema"].get("type") == "object":
+                                        process_schema_fields(
+                                            endpoint.id,
+                                            response["schema"].get("properties", {}),
+                                            is_response=True
+                                        )
+                                    elif response["schema"].get("type") == "array":
+                                        if "items" in response["schema"] and "properties" in response["schema"]["items"]:
+                                            process_schema_fields(
+                                                endpoint.id,
+                                                response["schema"]["items"].get("properties", {}),
+                                                is_response=True
+                                            )
 
             db.session.commit()
             flash(f"Swagger uploaded! Service UUID: {form.service_uuid.data}", "success")
@@ -81,7 +103,6 @@ def index():
             flash(f"Error: {str(e)}", "danger")
 
     return render_template("index.html", form=form, swaggers=SwaggerAPI.query.all())
-    
 
 @app.route("/swagger/<int:id>")
 def swagger_details(id):
