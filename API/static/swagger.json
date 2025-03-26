@@ -19,25 +19,20 @@
                             "properties": {
                                 "email": {
                                     "type": "string",
-                                    "format": "email",
-                                    "description": "User's email address"
+                                    "format": "email"
                                 },
                                 "password": {
-                                    "type": "string",
-                                    "description": "User's password"
+                                    "type": "string"
                                 },
                                 "phone_number": {
-                                    "type": "string",
-                                    "description": "User's phone number"
+                                    "type": "string"
                                 },
                                 "address": {
-                                    "type": "string",
-                                    "description": "User's address"
+                                    "type": "string"
                                 },
                                 "date_of_birth": {
                                     "type": "string",
-                                    "format": "date",
-                                    "description": "User's date of birth (YYYY-MM-DD)"
+                                    "format": "date"
                                 }
                             },
                             "required": [
@@ -73,12 +68,10 @@
                             "properties": {
                                 "email": {
                                     "type": "string",
-                                    "format": "email",
-                                    "description": "User's email address"
+                                    "format": "email"
                                 },
                                 "password": {
-                                    "type": "string",
-                                    "description": "User's password"
+                                    "type": "string"
                                 }
                             },
                             "required": [
@@ -94,6 +87,39 @@
                     },
                     "401": {
                         "description": "Invalid credentials"
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "summary": "Get list of users",
+                "responses": {
+                    "200": {
+                        "description": "List of users returned successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "phone_number": {
+                                        "type": "string"
+                                    },
+                                    "address": {
+                                        "type": "string"
+                                    },
+                                    "date_of_birth": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }

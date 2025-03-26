@@ -69,9 +69,25 @@ class Login(Resource):
         else:
             return {'message': 'Invalid credentials'}, 401
 
+# Pobieranie użytkowników
+class Users(Resource):
+    def get(self):
+        users = User.query.all()
+        users_data = [
+            {
+                'id': user.id,
+                'email': user.email,
+                'phone_number': user.phone_number,
+                'address': user.address,
+                'date_of_birth': user.date_of_birth
+            } for user in users
+        ]
+        return jsonify(users_data)
+
 # Dodawanie zasobów do API
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
+api.add_resource(Users, '/users')
 
 # Konfiguracja Swagger UI
 SWAGGER_URL = '/api/docs'  # URL dla Swagger UI
@@ -111,40 +127,19 @@ swagger_json = {
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
-                                    "type": "string",
-                                    "format": "email",
-                                    "description": "User's email address"
-                                },
-                                "password": {
-                                    "type": "string",
-                                    "description": "User's password"
-                                },
-                                "phone_number": {
-                                    "type": "string",
-                                    "description": "User's phone number"
-                                },
-                                "address": {
-                                    "type": "string",
-                                    "description": "User's address"
-                                },
-                                "date_of_birth": {
-                                    "type": "string",
-                                    "format": "date",
-                                    "description": "User's date of birth (YYYY-MM-DD)"
-                                }
+                                "email": {"type": "string", "format": "email"},
+                                "password": {"type": "string"},
+                                "phone_number": {"type": "string"},
+                                "address": {"type": "string"},
+                                "date_of_birth": {"type": "string", "format": "date"}
                             },
                             "required": ["email", "password", "phone_number", "address", "date_of_birth"]
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "User registered successfully"
-                    },
-                    "400": {
-                        "description": "User with this email already exists"
-                    }
+                    "201": {"description": "User registered successfully"},
+                    "400": {"description": "User with this email already exists"}
                 }
             }
         },
@@ -159,26 +154,38 @@ swagger_json = {
                         "schema": {
                             "type": "object",
                             "properties": {
-                                "email": {
-                                    "type": "string",
-                                    "format": "email",
-                                    "description": "User's email address"
-                                },
-                                "password": {
-                                    "type": "string",
-                                    "description": "User's password"
-                                }
+                                "email": {"type": "string", "format": "email"},
+                                "password": {"type": "string"}
                             },
                             "required": ["email", "password"]
                         }
                     }
                 ],
                 "responses": {
+                    "200": {"description": "Login successful"},
+                    "401": {"description": "Invalid credentials"}
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "summary": "Get list of users",
+                "responses": {
                     "200": {
-                        "description": "Login successful"
-                    },
-                    "401": {
-                        "description": "Invalid credentials"
+                        "description": "List of users returned successfully",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "integer"},
+                                    "email": {"type": "string"},
+                                    "phone_number": {"type": "string"},
+                                    "address": {"type": "string"},
+                                    "date_of_birth": {"type": "string"}
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -192,4 +199,4 @@ with open('static/swagger.json', 'w') as f:
     json.dump(swagger_json, f, indent=4)
 
 if __name__ == '__main__':
-    app.run(port=8080) 
+    app.run(port=8080)
