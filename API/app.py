@@ -84,10 +84,47 @@ class Users(Resource):
         ]
         return jsonify(users_data)
 
+# Pobieranie użytkownika po ID
+class GetUserByID(Resource):
+    def get(self, user_id):
+        user = User.query.get(user_id)
+        if user:
+            user_data = {
+                'id': user.id,
+                'email': user.email,
+                'phone_number': user.phone_number,
+                'address': user.address,
+                'date_of_birth': user.date_of_birth
+            }
+            return jsonify(user_data)
+        else:
+            return {'message': 'User not found'}, 404
+
+# Pobieranie użytkowników po adresie
+class GetUsersByAddress(Resource):
+    def get(self):
+        address = request.args.get('address')
+        if not address:
+            return {'message': 'Address parameter is required'}, 400
+        
+        users = User.query.filter(User.address.contains(address)).all()
+        users_data = [
+            {
+                'id': user.id,
+                'email': user.email,
+                'phone_number': user.phone_number,
+                'address': user.address,
+                'date_of_birth': user.date_of_birth
+            } for user in users
+        ]
+        return jsonify(users_data)
+
 # Dodawanie zasobów do API
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(Users, '/users')
+api.add_resource(GetUserByID, '/users/<int:user_id>')
+api.add_resource(GetUsersByAddress, '/users/by_address')
 
 # Konfiguracja Swagger UI
 SWAGGER_URL = '/api/docs'  # URL dla Swagger UI
@@ -187,6 +224,69 @@ swagger_json = {
                             }
                         }
                     }
+                }
+            }
+        },
+        "/users/{user_id}": {
+            "get": {
+                "summary": "Get user by ID",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": True,
+                        "type": "integer",
+                        "description": "ID of the user to retrieve"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User details returned successfully",
+                        "schema": {
+                            "type": "object",
+                            "properties": {
+                                "id": {"type": "integer"},
+                                "email": {"type": "string"},
+                                "phone_number": {"type": "string"},
+                                "address": {"type": "string"},
+                                "date_of_birth": {"type": "string"}
+                            }
+                        }
+                    },
+                    "404": {"description": "User not found"}
+                }
+            }
+        },
+        "/users/by_address": {
+            "get": {
+                "summary": "Get users by address",
+                "parameters": [
+                    {
+                        "name": "address",
+                        "in": "query",
+                        "required": True,
+                        "type": "string",
+                        "description": "Address to search for (can be partial)"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of users matching the address",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {"type": "integer"},
+                                    "email": {"type": "string"},
+                                    "phone_number": {"type": "string"},
+                                    "address": {"type": "string"},
+                                    "date_of_birth": {"type": "string"}
+                                }
+                            }
+                        }
+                    },
+                    "400": {"description": "Address parameter is required"}
                 }
             }
         }

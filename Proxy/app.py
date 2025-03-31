@@ -139,13 +139,30 @@ def edit_anonymization(field_id):
 
     return render_template("edit_anonymization.html", form=form, field=field)
 
+
 @app.route("/delete_swagger/<int:id>", methods=["POST"])
 def delete_swagger(id):
     swagger = SwaggerAPI.query.get_or_404(id)
+    
+    # First delete all related records
+    endpoints = Endpoint.query.filter_by(swagger_id=id).all()
+    for endpoint in endpoints:
+        # Delete all fields and their anonymizations for this endpoint
+        fields = Field.query.filter_by(endpoint_id=endpoint.id).all()
+        for field in fields:
+            FieldAnonymization.query.filter_by(field_id=field.id).delete()
+            db.session.delete(field)
+        
+        # Delete the endpoint itself
+        db.session.delete(endpoint)
+    
+    # Now delete the swagger
     db.session.delete(swagger)
     db.session.commit()
+    
     flash("Swagger configuration deleted successfully!", "success")
     return redirect(url_for("index"))
+
 
 @app.errorhandler(400)
 @app.errorhandler(404)
