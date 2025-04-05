@@ -2,15 +2,29 @@
 
 {% block content %}
 <div class="container">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-    </div>
-
-    <form method="POST">
+    <form method="POST" id="anonymization-form">
         {{ form.hidden_tag() }}
 
         <div class="mb-3">
+            <label class="form-label">Select Category</label>
+            <select class="form-select" id="category" name="category" onchange="updateAnonymizationMethods()" required>
+                <option value="" disabled {% if not form.category.data %}selected{% endif %}>Select a category</option>
+                {% for value, label in form.category.choices %}
+                    <option value="{{ value }}" {% if form.category.data == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
             <label class="form-label">Select Anonymization Method</label>
-            {{ form.anonymization_method(class="form-select") }}
+            <select class="form-select" id="anonymization_method" name="anonymization_method" required>
+                <option value="" disabled selected>Select an anonymization method</option>
+                {% if current_method %}
+                    <option value="{{ current_method.id }}" selected>{{ current_method.name }}</option>
+                {% endif %}
+            </select>
         </div>
 
         <button type="submit" class="btn btn-success">Save</button>
@@ -18,4 +32,57 @@
            class="btn btn-secondary">Cancel</a>
     </form>
 </div>
+
+<script>
+// Funkcja do aktualizacji metod anonimizacji
+function updateAnonymizationMethods() {
+    const category = document.getElementById('category').value;
+    const methodSelect = document.getElementById('anonymization_method');
+    
+    if (!category) {
+        methodSelect.innerHTML = '<option value="" disabled selected>Select an anonymization method</option>';
+        return;
+    }
+
+    fetch('/get_anonymization_methods', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ category: category })
+    })
+    .then(response => response.json())
+    .then(data => {
+        methodSelect.innerHTML = '<option value="" disabled selected>Select an anonymization method</option>';
+        data.forEach(method => {
+            const option = new Option(method.name, method.id);
+            methodSelect.add(option);
+        });
+        
+        // Ustaw wcześniej wybraną metodę jeśli istnieje
+        const currentMethodId = '{{ current_method.id if current_method else "" }}';
+        if (currentMethodId) {
+            methodSelect.value = currentMethodId;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+// Inicjalizacja przy ładowaniu strony
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.getElementById('category');
+    if (categorySelect.value) {
+        updateAnonymizationMethods();
+    }
+    
+    // Walidacja formularza
+    document.getElementById('anonymization-form').addEventListener('submit', function(e) {
+        const methodSelect = document.getElementById('anonymization_method');
+        if (!methodSelect.value) {
+            e.preventDefault();
+            alert('Please select an anonymization method');
+        }
+    });
+});
+</script>
 {% endblock %}

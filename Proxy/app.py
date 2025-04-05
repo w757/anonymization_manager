@@ -1,10 +1,12 @@
 import os
 import uuid
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization
 from forms import SwaggerForm, AnonymizationForm
 import json
+
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -16,9 +18,18 @@ def init_db():
         if not os.path.exists("database.db"):
             db.create_all()
             if not AnonymizationMethod.query.first():
-                default_methods = ["Masking", "Encryption", "Tokenization", "None"]
-                for method in default_methods:
-                    db.session.add(AnonymizationMethod(name=method))
+                default_methods = [
+                    ("Masking", "anonimizacja"),
+                    ("Encryption", "anonimizacja"),
+                    ("Tokenization", "pseudoanonimizacja"),
+                    ("None", "anonimizacja")
+                ]
+                for method, category in default_methods:
+                    anonymization_method = AnonymizationMethod(
+                        name=method,
+                        category=category
+                    )
+                    db.session.add(anonymization_method)
                 db.session.commit()
 
 init_db()
@@ -114,31 +125,65 @@ def swagger_details(id):
         endpoints=endpoints
     )
 
+
+@app.route('/get_anonymization_methods', methods=['POST'])
+def get_anonymization_methods():
+    data = request.get_json()
+    methods = AnonymizationMethod.query.filter_by(category=data['category']).all()
+    return jsonify([{'id': m.id, 'name': m.name} for m in methods])
+
 @app.route("/edit_anonymization/<int:field_id>", methods=["GET", "POST"])
 def edit_anonymization(field_id):
     field = Field.query.get_or_404(field_id)
-    form = AnonymizationForm(obj=field)
+    form = AnonymizationForm()
 
-    if form.validate_on_submit():
-        if field.anonymization:
-            field.anonymization.anonymization_method_id = form.anonymization_method.data
-        else:
-            field_anonymization = FieldAnonymization(
-                field_id=field.id,
-                anonymization_method_id=form.anonymization_method.data
-            )
-            db.session.add(field_anonymization)
+    # Dla żądania GET - wczytaj istniejące wartości
+    if request.method == 'GET':
+        if field.anonymization and field.anonymization.anonymization_method:
+            form.category.data = field.anonymization.anonymization_method.category
+            # Nie ustawiamy metody tutaj, bo zostanie załadowana przez JavaScript
 
-        db.session.commit()
-        flash("Anonymization method updated successfully!", "success")
-        return redirect(url_for(
-            "swagger_details",
-            id=field.endpoint.swagger_id,
-            _anchor=f"endpoint-{field.endpoint.id}"
-        ))
+    # Dla żądania POST - zapisz zmiany
+    if request.method == 'POST':
+        # Pobierz ID metody z formularza
+        method_id = request.form.get('anonymization_method')
+        
+        if not method_id:
+            flash("Please select an anonymization method", "danger")
+            return redirect(url_for('edit_anonymization', field_id=field.id))
 
-    return render_template("edit_anonymization.html", form=form, field=field)
+        # Sprawdź czy metoda istnieje
+        method = AnonymizationMethod.query.get(method_id)
+        if not method:
+            flash("Invalid method selected", "danger")
+            return redirect(url_for('edit_anonymization', field_id=field.id))
 
+        # Upewnij się, że istnieje rekord FieldAnonymization
+        if not field.anonymization:
+            field.anonymization = FieldAnonymization(field_id=field.id)
+            db.session.add(field.anonymization)
+
+        # Aktualizuj metodę
+        field.anonymization.anonymization_method_id = method.id
+        
+        try:
+            db.session.commit()
+            flash("Anonymization method updated successfully!", "success")
+            return redirect(url_for(
+                "swagger_details",
+                id=field.endpoint.swagger_id,
+                _anchor=f"endpoint-{field.endpoint.id}"
+            ))
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error saving changes: {str(e)}", "danger")
+
+    return render_template(
+        "edit_anonymization.html",
+        form=form,
+        field=field,
+        current_method=field.anonymization.anonymization_method if field.anonymization else None
+    )
 
 @app.route("/delete_swagger/<int:id>", methods=["POST"])
 def delete_swagger(id):

@@ -41,10 +41,24 @@ class SwaggerForm(FlaskForm):
 
 class AnonymizationForm(FlaskForm):
     """Form to select an anonymization method for a specific field."""
-    anonymization_method = SelectField("Anonymization Method", coerce=int, validators=[DataRequired()])
+    category = SelectField(
+        "Category",
+        choices=[],  # Początkowo puste, będzie wypełniane dynamicznie
+        validators=[DataRequired()]
+    )
+
+    anonymization_method = SelectField(
+        "Anonymization Method",
+        choices=[],  # Początkowo puste
+        validators=[DataRequired()]
+    )
+
     submit = SubmitField("Save")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        with db.session.no_autoflush:
-            self.anonymization_method.choices = [(m.id, m.name) for m in AnonymizationMethod.query.all()]
+        # Wypełnij kategorie
+        self.category.choices = [
+            ("anonimizacja", "Anonimizacja"), 
+            ("pseudoanonimizacja", "Pseudoanonimizacja")
+        ]
