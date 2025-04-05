@@ -132,38 +132,38 @@ def get_anonymization_methods():
     methods = AnonymizationMethod.query.filter_by(category=data['category']).all()
     return jsonify([{'id': m.id, 'name': m.name} for m in methods])
 
+
+
 @app.route("/edit_anonymization/<int:field_id>", methods=["GET", "POST"])
 def edit_anonymization(field_id):
     field = Field.query.get_or_404(field_id)
+    endpoint = field.endpoint  # Pobieramy powiązany endpoint
+    swagger = endpoint.swagger  # Pobieramy powiązany swagger
+    
     form = AnonymizationForm()
 
     # Dla żądania GET - wczytaj istniejące wartości
     if request.method == 'GET':
         if field.anonymization and field.anonymization.anonymization_method:
             form.category.data = field.anonymization.anonymization_method.category
-            # Nie ustawiamy metody tutaj, bo zostanie załadowana przez JavaScript
 
     # Dla żądania POST - zapisz zmiany
     if request.method == 'POST':
-        # Pobierz ID metody z formularza
         method_id = request.form.get('anonymization_method')
         
         if not method_id:
             flash("Please select an anonymization method", "danger")
             return redirect(url_for('edit_anonymization', field_id=field.id))
 
-        # Sprawdź czy metoda istnieje
         method = AnonymizationMethod.query.get(method_id)
         if not method:
             flash("Invalid method selected", "danger")
             return redirect(url_for('edit_anonymization', field_id=field.id))
 
-        # Upewnij się, że istnieje rekord FieldAnonymization
         if not field.anonymization:
             field.anonymization = FieldAnonymization(field_id=field.id)
             db.session.add(field.anonymization)
 
-        # Aktualizuj metodę
         field.anonymization.anonymization_method_id = method.id
         
         try:
@@ -171,8 +171,8 @@ def edit_anonymization(field_id):
             flash("Anonymization method updated successfully!", "success")
             return redirect(url_for(
                 "swagger_details",
-                id=field.endpoint.swagger_id,
-                _anchor=f"endpoint-{field.endpoint.id}"
+                id=endpoint.swagger_id,
+                _anchor=f"endpoint-{endpoint.id}"
             ))
         except Exception as e:
             db.session.rollback()
@@ -182,8 +182,11 @@ def edit_anonymization(field_id):
         "edit_anonymization.html",
         form=form,
         field=field,
+        endpoint=endpoint,
+        swagger=swagger,
         current_method=field.anonymization.anonymization_method if field.anonymization else None
     )
+    
 
 @app.route("/delete_swagger/<int:id>", methods=["POST"])
 def delete_swagger(id):
