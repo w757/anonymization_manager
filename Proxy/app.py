@@ -7,6 +7,7 @@ from flask_sqlalchemy import SQLAlchemy
 from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization
 from forms import SwaggerForm, AnonymizationForm
 import json
+from data_identifier import analyze_field
 
 
 
@@ -21,10 +22,12 @@ def init_db():
             db.create_all()
             if not AnonymizationMethod.query.first():
                 default_methods = [
-                    ("Masking", "anonimizacja"),
-                    ("Encryption", "anonimizacja"),
-                    ("Tokenization", "pseudoanonimizacja"),
-                    ("None", "anonimizacja")
+                    ("Generalization", "Anonymization"),
+                    ("Suppression", "Anonymization"),
+                    ("Aggregation", "Anonymization"),
+                    ("Masking", "Anonymization"),
+                    ("Hashing", "Pseudonymization"),
+                    ("Encryption", "Pseudonymization")
                 ]
                 for method, category in default_methods:
                     anonymization_method = AnonymizationMethod(
@@ -206,15 +209,20 @@ def edit_anonymization(field_id):
             request_body = path_info.get('requestBody', {}).get('content', {}).get('application/json', {})
             if 'schema' in request_body and 'properties' in request_body['schema']:
                 example_value = request_body['schema']['properties'].get(field.name, {}).get('example')
+   
+        if example_value:
+            data_analysis = analyze_field(field.name, example_value)
+            
     except Exception as e:
         print(f"Error parsing Swagger JSON: {e}")
 
     form = AnonymizationForm()
 
-    # Dla żądania GET - wczytaj istniejące wartości
+  # Dla żądania GET - wczytaj istniejące wartości
     if request.method == 'GET':
         if field.anonymization and field.anonymization.anonymization_method:
             form.category.data = field.anonymization.anonymization_method.category
+        form.data_category.data = field.data_category  # Wczytaj istniejącą kategorię danych
 
     # Dla żądania POST - zapisz zmiany
     if request.method == 'POST':
@@ -234,6 +242,7 @@ def edit_anonymization(field_id):
             db.session.add(field.anonymization)
 
         field.anonymization.anonymization_method_id = method.id
+        field.data_category = form.data_category.data  # Zapisz kategorię danych
         
         try:
             db.session.commit()
@@ -247,13 +256,15 @@ def edit_anonymization(field_id):
             db.session.rollback()
             flash(f"Error saving changes: {str(e)}", "danger")
 
+    # Reszta kodu pozostaje bez zmian
     return render_template(
         "edit_anonymization.html",
         form=form,
         field=field,
         endpoint=endpoint,
         swagger=swagger,
-        example_value=example_value,  # Przekazujemy example_value do szablonu
+        example_value=example_value,
+        data_analysis=data_analysis,
         current_method=field.anonymization.anonymization_method if field.anonymization else None
     )
 
@@ -279,7 +290,6 @@ def delete_swagger(id):
     
     flash("Swagger configuration deleted successfully!", "success")
     return redirect(url_for("index"))
-
 
 @app.errorhandler(400)
 @app.errorhandler(404)

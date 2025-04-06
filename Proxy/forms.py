@@ -13,6 +13,25 @@ class SwaggerForm(FlaskForm):
     service_uuid = HiddenField("Service UUID", default=lambda: str(uuid.uuid4()))
     submit = SubmitField("Upload")
 
+DATA_CATEGORIES = [
+    ('', '-- Select data category --'),
+    ('first_name', 'First name'),
+    ('last_name', 'Last name'),
+    ('birth_date', 'Birth date'),
+    ('gender', 'Gender'),
+    ('pesel', 'PESEL'),
+    ('email', 'Email'),
+    ('phone', 'Phone number'),
+    ('address', 'Address'),
+    ('street', 'Street'),
+    ('postal_code', 'Postal code'),
+    ('city', 'City'),
+    ('country', 'Country'),
+    ('login', 'Login'),
+    ('password', 'Password'),
+    ('other', 'Other')
+]
+
 class AnonymizationForm(FlaskForm):
     """Form to select an anonymization method for a specific field."""
     category = SelectField(
@@ -27,12 +46,26 @@ class AnonymizationForm(FlaskForm):
         validators=[DataRequired()]
     )
 
+    data_category = SelectField(
+        "Data Category",
+        choices=DATA_CATEGORIES,
+        validators=[DataRequired()]
+    )
+
     submit = SubmitField("Save")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Wypełnij kategorie
         self.category.choices = [
-            ("anonimizacja", "Anonimizacja"), 
-            ("pseudoanonimizacja", "Pseudoanonimizacja")
+            ("Anonymization", "Anonymization"), 
+            ("Pseudonymization", "Pseudonymization")
         ]
+
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #     # Wypełnij kategorie
+    #     self.category.choices = [
+    #         ("Anonymization", "Anonymization"), 
+    #         ("pseudoanonimizacja", "Pseudoanonimizacja")
+    #     ]

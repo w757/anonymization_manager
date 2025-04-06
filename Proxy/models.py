@@ -22,9 +22,9 @@ class Field(db.Model):
     name = db.Column(db.String(255), nullable=False)
     data_type = db.Column(db.String(50), nullable=True)
     description = db.Column(db.Text, nullable=True)
-    is_response_field = db.Column(db.Boolean, default=False)  # New field
+    is_response_field = db.Column(db.Boolean, default=False)
+    data_category = db.Column(db.String(50), nullable=True)  # Nowe pole dla kategorii danych
     anonymization = db.relationship('FieldAnonymization', backref='field', uselist=False)
-
     
 class AnonymizationMethod(db.Model):
     id = db.Column(db.Integer, primary_key=True)
