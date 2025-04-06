@@ -12,3 +12,4 @@ faker
 phonenumbers
 email_validator
 pyap
+cryptography

@@ -5,6 +5,8 @@ from models import db, SwaggerAPI, Endpoint, Field, FieldAnonymization, Anonymiz
 import uuid
 from sqlalchemy.orm import joinedload
 from anonymization_methods import apply_anonymization
+from utils import validate_uuid
+
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
@@ -12,12 +14,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 
 # Helper functions
-def validate_uuid(uuid_to_test):
-    try:
-        uuid.UUID(str(uuid_to_test))
-        return True
-    except ValueError:
-        return False
+# def validate_uuid(uuid_to_test):
+#     try:
+#         uuid.UUID(str(uuid_to_test))
+#         return True
+#     except ValueError:
+#         return False
 
 def get_target_api_url(service_uuid):
     with app.app_context():
@@ -84,6 +86,8 @@ def anonymize_payload(data, path, method, is_response):
     elif isinstance(data, dict):
         return anonymize_item(data, endpoint_config)
     return data
+
+
 
 # Request/response handlers
 @app.before_request

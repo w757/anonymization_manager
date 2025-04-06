@@ -7,7 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization
 from forms import SwaggerForm, AnonymizationForm
 import json
-from data_identifier import analyze_field
+#from data_identifier import analyze_field
+import secrets
 
 
 
@@ -146,7 +147,8 @@ def index():
             swagger = SwaggerAPI(
                 api_url=form.api_url.data,
                 service_uuid=form.service_uuid.data,
-                raw_json=form.swagger_json.data
+                raw_json=form.swagger_json.data,
+                encryption_key=secrets.token_hex(32)  # Dodaj klucz szyfrowania
             )
             db.session.add(swagger)
             db.session.commit()
@@ -210,8 +212,8 @@ def edit_anonymization(field_id):
             if 'schema' in request_body and 'properties' in request_body['schema']:
                 example_value = request_body['schema']['properties'].get(field.name, {}).get('example')
    
-        if example_value:
-            data_analysis = analyze_field(field.name, example_value)
+        # if example_value:
+        #     data_analysis = analyze_field(field.name, example_value)
             
     except Exception as e:
         print(f"Error parsing Swagger JSON: {e}")
@@ -264,7 +266,6 @@ def edit_anonymization(field_id):
         endpoint=endpoint,
         swagger=swagger,
         example_value=example_value,
-        data_analysis=data_analysis,
         current_method=field.anonymization.anonymization_method if field.anonymization else None
     )
 

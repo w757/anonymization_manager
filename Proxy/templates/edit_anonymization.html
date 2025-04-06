@@ -32,27 +32,6 @@
                     </div>
 
                     <div class="mb-3">
-                        <strong>Data Analysis:</strong>
-                        <div class="p-2 bg-light rounded">
-                            <table class="table table-sm">
-                                <tr>
-                                    <th>Type:</th>
-                                    <td>{{ data_analysis.type }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Category:</th>
-                                    <td>{{ data_analysis.category }}</td>
-                                </tr>
-                                {% if data_analysis.suggested_method %}
-                                <tr>
-                                    <th>Suggested Method:</th>
-                                    <td>
-                                        <span class="badge bg-info">{{ data_analysis.suggested_method }}</span>
-                                    </td>
-                                </tr>
-                                {% endif %}
-                            </table>
-                        </div>
                     {% endif %}
                     
                     {% if field.description %}
@@ -199,32 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// W sekcji JavaScript w szablonie
-function applySuggestedMethod() {
-    const suggestedMethod = '{{ data_analysis.suggested_method }}';
-    if (!suggestedMethod) return;
-    
-    // Znajdź metodę w dostępnych opcjach
-    const methodSelect = document.getElementById('anonymization_method');
-    for (let i = 0; i < methodSelect.options.length; i++) {
-        if (methodSelect.options[i].text.toLowerCase().includes(suggestedMethod.toLowerCase())) {
-            methodSelect.value = methodSelect.options[i].value;
-            break;
-        }
-    }
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-    // ... istniejący kod ...
-    
-    // Po załadowaniu metod zastosuj sugestię
-    const categorySelect = document.getElementById('category');
-    if (categorySelect.value) {
-        updateAnonymizationMethods().then(applySuggestedMethod);
-    }
-});
 </script>
-
-
 
 {% endblock %}

@@ -7,7 +7,9 @@ class SwaggerAPI(db.Model):
     api_url = db.Column(db.String(255), nullable=False)
     service_uuid = db.Column(db.String(36), unique=True, nullable=False)
     raw_json = db.Column(db.Text, nullable=False)
+    encryption_key = db.Column(db.String(128), nullable=True) 
     endpoints = db.relationship('Endpoint', backref='swagger', lazy=True)
+
 
 class Endpoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
