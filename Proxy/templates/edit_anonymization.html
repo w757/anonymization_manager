@@ -23,12 +23,22 @@
                     <p><strong>Location:</strong> {% if field.is_response_field %}Response{% else %}Request{% endif %}</p>
                 </div>
                 <div class="col-md-6">
+                    {% if example_value is not none %}
+                    <div class="mb-3">
+                        <strong>Example Value:</strong>
+                        <div class="p-2 bg-light rounded">
+                            <code>{{ example_value }}</code>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
                     {% if field.description %}
                     <div class="mb-2">
                         <strong>Description:</strong>
                         <p class="text-muted mb-0">{{ field.description }}</p>
                     </div>
                     {% endif %}
+                    
                     {% if field.anonymization and field.anonymization.anonymization_method %}
                     <div>
                         <strong>Current Method:</strong>
@@ -158,4 +168,3 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 {% endblock %}
-

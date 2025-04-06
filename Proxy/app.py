@@ -183,9 +183,32 @@ def get_anonymization_methods():
 @app.route("/edit_anonymization/<int:field_id>", methods=["GET", "POST"])
 def edit_anonymization(field_id):
     field = Field.query.get_or_404(field_id)
-    endpoint = field.endpoint  # Pobieramy powiązany endpoint
-    swagger = endpoint.swagger  # Pobieramy powiązany swagger
+    endpoint = field.endpoint
+    swagger = endpoint.swagger
     
+    # Pobierz przykładową wartość z Swaggera
+    example_value = None
+    try:
+        swagger_data = json.loads(swagger.raw_json)
+        path_info = swagger_data['paths'].get(endpoint.path, {}).get(endpoint.method.lower(), {})
+        
+        if field.is_response_field:
+            # Dla pól w odpowiedzi
+            for response in path_info.get('responses', {}).values():
+                content = response.get('content', {}).get('application/json', {})
+                if 'example' in content:
+                    if isinstance(content['example'], list) and content['example']:
+                        example_value = content['example'][0].get(field.name)
+                    elif isinstance(content['example'], dict):
+                        example_value = content['example'].get(field.name)
+        else:
+            # Dla pól w żądaniu
+            request_body = path_info.get('requestBody', {}).get('content', {}).get('application/json', {})
+            if 'schema' in request_body and 'properties' in request_body['schema']:
+                example_value = request_body['schema']['properties'].get(field.name, {}).get('example')
+    except Exception as e:
+        print(f"Error parsing Swagger JSON: {e}")
+
     form = AnonymizationForm()
 
     # Dla żądania GET - wczytaj istniejące wartości
@@ -230,9 +253,9 @@ def edit_anonymization(field_id):
         field=field,
         endpoint=endpoint,
         swagger=swagger,
+        example_value=example_value,  # Przekazujemy example_value do szablonu
         current_method=field.anonymization.anonymization_method if field.anonymization else None
     )
-    
 
 @app.route("/delete_swagger/<int:id>", methods=["POST"])
 def delete_swagger(id):
@@ -281,4 +304,3 @@ def handle_error(error):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
