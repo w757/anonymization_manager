@@ -57,35 +57,47 @@ def get_endpoint_config(path, method, is_response):
                 field.anonymization.anonymization_method)
         }
 
-def anonymize_item(item, field_config):
-    """Anonymize single item according to config"""
+def anonymize_item(item, field_config, service_uuid):
+    """Anonymize single item according to config, passing encryption_key and data_category"""
     if not isinstance(item, dict):
         return item
         
     anonymized = {}
+    
+    # Pobieramy encryption_key z bazy dla service_uuid
+    swagger_api = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
+    encryption_key = swagger_api.encryption_key if swagger_api else None
+
     for key, value in item.items():
         if key in field_config:
-            anonymized[key] = apply_anonymization(value, field_config[key])
+            # Pobieramy data_category z bazy dla danego pola
+            field = Field.query.filter_by(name=key).first()
+            data_category = field.data_category if field else None
+
+            # Przekazujemy encryption_key oraz data_category do apply_anonymization
+            anonymized[key] = apply_anonymization(value, field_config[key], encryption_key, data_category)
         elif isinstance(value, dict):
-            anonymized[key] = anonymize_item(value, field_config)
+            anonymized[key] = anonymize_item(value, field_config, service_uuid)
         elif isinstance(value, list):
-            anonymized[key] = [anonymize_item(i, field_config) if isinstance(i, dict) else i 
+            anonymized[key] = [anonymize_item(i, field_config, service_uuid) if isinstance(i, dict) else i 
                             for i in value]
         else:
             anonymized[key] = value
+
     return anonymized
 
-def anonymize_payload(data, path, method, is_response):
+def anonymize_payload(data, path, method, is_response, service_uuid):
     """Main anonymization function for both requests and responses"""
     endpoint_config = get_endpoint_config(path, method, is_response)
     if not endpoint_config:
         return data
         
     if isinstance(data, list):
-        return [anonymize_item(item, endpoint_config) for item in data]
+        return [anonymize_item(item, endpoint_config, service_uuid) for item in data]
     elif isinstance(data, dict):
-        return anonymize_item(data, endpoint_config)
+        return anonymize_item(data, endpoint_config, service_uuid)
     return data
+
 
 
 
@@ -100,7 +112,8 @@ def before_request():
         if 'application/json' in content_type and request.get_data():
             try:
                 data = request.get_json()
-                anonymized_data = anonymize_payload(data, request.path, request.method, is_response=False)
+                service_uuid = request.headers.get('X-Service-UUID')
+                anonymized_data = anonymize_payload(data, request.path, request.method, is_response=False, service_uuid=service_uuid)
                 request._cached_data = json.dumps(anonymized_data)
                 request._parsed_content_type = 'application/json'
             except json.JSONDecodeError as e:
@@ -109,8 +122,11 @@ def before_request():
         # Handle form data
         elif 'application/x-www-form-urlencoded' in content_type or 'multipart/form-data' in content_type:
             form_data = request.form.to_dict()
-            anonymized_data = anonymize_payload(form_data, request.path, request.method, is_response=False)
+            service_uuid = request.headers.get('X-Service-UUID')
+            anonymized_data = anonymize_payload(form_data, request.path, request.method, is_response=False, service_uuid=service_uuid)
             request.form = anonymized_data
+
+
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
@@ -154,13 +170,15 @@ def proxy(path):
             timeout=30
         )
 
+
         # Anonymize response if JSON
         content_type = response.headers.get('Content-Type', '').lower()
         if 'application/json' in content_type and response.content:
             try:
                 response_data = response.json()
+                service_uuid = request.headers.get('X-Service-UUID')  # Get service_uuid from request
                 anonymized_data = anonymize_payload(
-                    response_data, path, request.method, is_response=True)
+                    response_data, path, request.method, is_response=True, service_uuid=service_uuid)  # Pass service_uuid here
                 
                 return make_response(
                     json.dumps(anonymized_data),
@@ -170,7 +188,9 @@ def proxy(path):
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"Response JSON decode error: {e}")
                 pass
-        
+
+
+                
         return (response.content, response.status_code, response.headers.items())
     
     except requests.exceptions.RequestException as e:

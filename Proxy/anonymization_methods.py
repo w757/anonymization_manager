@@ -4,8 +4,7 @@ import base64
 import hashlib
 from app import app
 from utils import validate_uuid
-
-
+from models import SwaggerAPI, Field
 
 # 🔑 Pobranie klucza szyfrowania z DB
 def get_encryption_key(service_uuid):
@@ -17,8 +16,7 @@ def get_encryption_key(service_uuid):
 
 
 # 🔒 Szyfrowanie przy użyciu klucza
-def encrypt_value(value, service_uuid):
-    encryption_key = get_encryption_key(service_uuid)
+def encrypt_value(value, encryption_key, data_category):
     if not encryption_key:
         return "***ENCRYPTION_KEY_MISSING***"
     
@@ -31,38 +29,40 @@ def encrypt_value(value, service_uuid):
     return encrypted.decode()
 
 
+
 # 🧂 Haszowanie z solą
-def hash_value(value, service_uuid):
-    encryption_key = get_encryption_key(service_uuid)
+def hash_value(value, encryption_key, data_category):
     if not encryption_key:
         return "HASH_KEY_MISSING"
 
     salt = encryption_key[:16].encode()  # użyj pierwszych 16 znaków klucza jako sól
     hashed = pbkdf2_hmac('sha256', value.encode(), salt, 100000)
-    return "HASH-" + hashed.hex()
+    return hashed.hex()
 
 
-def mask_value(value):
+
+def mask_value(value, data_category):
     return "***MASKED***"
 
-def tokenize_value(value):
+def tokenize_value(value, data_category):
     return "***TOKENIZED***"
 
-def redact_value(value):
+def redact_value(value, data_category):
     return "[REDACTED]"
 
-def pseudonymize_value(value):
+def pseudonymize_value(value, data_category):
     return "PSEUDO-" + str(abs(hash(str(value))))
 
+
 # 🔁 Główna funkcja
-def apply_anonymization(value, method_name, service_uuid=None):
+def apply_anonymization(value, method_name, service_uuid=None, data_category=None):
     methods = {
-        "Masking": lambda v: mask_value(v),
-        "Encryption": lambda v: encrypt_value(v, service_uuid),
-        "Tokenization": lambda v: tokenize_value(v),
-        "Redaction": lambda v: redact_value(v),
-        "Pseudonymization": lambda v: pseudonymize_value(v),
-        "Hashing": lambda v: hash_value(v, service_uuid)
+        "Masking": lambda v: mask_value(v, data_category),
+        "Encryption": lambda v: encrypt_value(v, service_uuid, data_category),
+        "Tokenization": lambda v: tokenize_value(v, data_category),
+        "Redaction": lambda v: redact_value(v, data_category),
+        "Pseudonymization": lambda v: pseudonymize_value(v, data_category),
+        "Hashing": lambda v: hash_value(v, service_uuid, data_category)
     }
     
     if method_name not in methods:
