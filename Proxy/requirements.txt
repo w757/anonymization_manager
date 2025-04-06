@@ -6,3 +6,5 @@ SQLAlchemy
 Jinja2==3.1.2
 Werkzeug==3.0.1
 requests==2.31.0
+openapi-spec-validator>=0.5.0
+prance>=0.21.8

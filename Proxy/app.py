@@ -1,3 +1,5 @@
+
+
 import os
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -50,6 +52,84 @@ def process_schema_fields(endpoint_id, properties, is_response=False):
         field_anonymization = FieldAnonymization(field_id=field.id)
         db.session.add(field_anonymization)
 
+def extract_schema_properties(schema):
+    if not schema:
+        return {}
+
+    if 'allOf' in schema:
+        combined_props = {}
+        for item in schema['allOf']:
+            combined_props.update(extract_schema_properties(item))
+        return combined_props
+
+    if schema.get('type') == 'array' and 'items' in schema:
+        return extract_schema_properties(schema['items'])
+
+    return schema.get('properties', {})
+
+
+
+def parse_openapi(swagger, parsed_data):
+    for path, methods in parsed_data.get("paths", {}).items():
+        for method, details in methods.items():
+            endpoint = Endpoint(
+                swagger_id=swagger.id,
+                path=path,
+                method=method.upper()
+            )
+            db.session.add(endpoint)
+            db.session.commit()
+
+            # ✅ 1. Parametry (query, path, header, cookie)
+            for param in details.get("parameters", []):
+                param_name = param.get("name")
+                param_schema = param.get("schema", {})
+                param_type = param_schema.get("type", "object")
+
+                field = Field(
+                    endpoint_id=endpoint.id,
+                    name=param_name,
+                    data_type=param_type,
+                    is_response_field=False
+                )
+                db.session.add(field)
+
+            # ✅ 2. requestBody (OpenAPI 3 only)
+            request_schema = details.get("requestBody", {}) \
+                .get("content", {}) \
+                .get("application/json", {}) \
+                .get("schema")
+
+            if request_schema:
+                props = extract_schema_properties(request_schema)
+                process_schema_fields(endpoint.id, props, is_response=False)
+
+            # ✅ 3. Responses
+            for response in details.get("responses", {}).values():
+                response_schema = response.get("schema")  # OAS2
+                if not response_schema:
+                    content = response.get("content", {}).get("application/json", {})
+                    example = content.get("example")
+
+                    if example:
+                        # Jeśli example to lista (np. GET /users)
+                        if isinstance(example, list) and len(example) > 0:
+                            first = example[0]
+                            if isinstance(first, dict):
+                                props = {k: {"type": type(v).__name__} for k, v in first.items()}
+                                process_schema_fields(endpoint.id, props, is_response=True)
+                        # Jeśli example to pojedynczy obiekt (np. GET /users/{id})
+                        elif isinstance(example, dict):
+                            props = {k: {"type": type(v).__name__} for k, v in example.items()}
+                            process_schema_fields(endpoint.id, props, is_response=True)
+                else:
+                    props = extract_schema_properties(response_schema)
+                    process_schema_fields(endpoint.id, props, is_response=True)
+
+
+    db.session.commit()
+
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     form = SwaggerForm()
@@ -59,7 +139,7 @@ def index():
             if SwaggerAPI.query.filter_by(api_url=form.api_url.data).first():
                 flash("API URL already exists!", "warning")
                 return redirect(url_for("index"))
-            
+
             swagger = SwaggerAPI(
                 api_url=form.api_url.data,
                 service_uuid=form.service_uuid.data,
@@ -68,52 +148,18 @@ def index():
             db.session.add(swagger)
             db.session.commit()
 
-            if "paths" in parsed_data:
-                for path, methods in parsed_data["paths"].items():
-                    for method, details in methods.items():
-                        endpoint = Endpoint(
-                            swagger_id=swagger.id,
-                            path=path,
-                            method=method.upper()
-                        )
-                        db.session.add(endpoint)
-                        db.session.commit()
-
-                        # Process request parameters
-                        if "parameters" in details:
-                            for param in details["parameters"]:
-                                if param.get("in") == "body" and "schema" in param:
-                                    process_schema_fields(
-                                        endpoint.id,
-                                        param["schema"].get("properties", {}),
-                                        is_response=False
-                                    )
-
-                        # Process response schemas
-                        if "responses" in details:
-                            for response_code, response in details["responses"].items():
-                                if "schema" in response:
-                                    if response["schema"].get("type") == "object":
-                                        process_schema_fields(
-                                            endpoint.id,
-                                            response["schema"].get("properties", {}),
-                                            is_response=True
-                                        )
-                                    elif response["schema"].get("type") == "array":
-                                        if "items" in response["schema"] and "properties" in response["schema"]["items"]:
-                                            process_schema_fields(
-                                                endpoint.id,
-                                                response["schema"]["items"].get("properties", {}),
-                                                is_response=True
-                                            )
-
+            parse_openapi(swagger, parsed_data)
             db.session.commit()
+
             flash(f"Swagger uploaded! Service UUID: {form.service_uuid.data}", "success")
             return redirect(url_for("index"))
         except Exception as e:
             flash(f"Error: {str(e)}", "danger")
 
     return render_template("index.html", form=form, swaggers=SwaggerAPI.query.all())
+
+
+
 
 @app.route("/swagger/<int:id>")
 def swagger_details(id):
@@ -235,3 +281,4 @@ def handle_error(error):
 
 if __name__ == "__main__":
     app.run(debug=True)
+

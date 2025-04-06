@@ -146,61 +146,97 @@ if not os.path.exists('static'):
 
 # Zapis definicji Swaggera do pliku `static/swagger.json`
 swagger_json = {
-    "swagger": "2.0",
+    "openapi": "3.0.3",
     "info": {
         "title": "Authentication API",
-        "version": "1.0",
+        "version": "1.0.0",
         "description": "API for user authentication and registration"
     },
     "paths": {
         "/register": {
             "post": {
                 "summary": "Register a new user",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": True,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "email": {"type": "string", "format": "email"},
-                                "password": {"type": "string"},
-                                "phone_number": {"type": "string"},
-                                "address": {"type": "string"},
-                                "date_of_birth": {"type": "string", "format": "date"}
-                            },
-                            "required": ["email", "password", "phone_number", "address", "date_of_birth"]
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {"type": "string", "format": "email", "example": "user@example.com"},
+                                    "password": {"type": "string", "example": "securePassword123"},
+                                    "phone_number": {"type": "string", "example": "+48123456789"},
+                                    "address": {"type": "string", "example": "ul. Przykładowa 123, Warszawa"},
+                                    "date_of_birth": {"type": "string", "format": "date", "example": "1990-01-15"}
+                                },
+                                "required": ["email", "password", "phone_number", "address", "date_of_birth"]
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
-                    "201": {"description": "User registered successfully"},
-                    "400": {"description": "User with this email already exists"}
+                    "201": {
+                        "description": "User registered successfully",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "User registered successfully"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "User with this email already exists",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "User with this email already exists"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
         "/login": {
             "post": {
                 "summary": "Login a user",
-                "parameters": [
-                    {
-                        "name": "body",
-                        "in": "body",
-                        "required": True,
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "email": {"type": "string", "format": "email"},
-                                "password": {"type": "string"}
-                            },
-                            "required": ["email", "password"]
+                "requestBody": {
+                    "required": True,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {"type": "string", "format": "email", "example": "user@example.com"},
+                                    "password": {"type": "string", "example": "securePassword123"}
+                                },
+                                "required": ["email", "password"]
+                            }
                         }
                     }
-                ],
+                },
                 "responses": {
-                    "200": {"description": "Login successful"},
-                    "401": {"description": "Invalid credentials"}
+                    "200": {
+                        "description": "Login successful",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Login successful"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Invalid credentials",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Invalid credentials"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -210,17 +246,17 @@ swagger_json = {
                 "responses": {
                     "200": {
                         "description": "List of users returned successfully",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {"type": "integer"},
-                                    "email": {"type": "string"},
-                                    "phone_number": {"type": "string"},
-                                    "address": {"type": "string"},
-                                    "date_of_birth": {"type": "string"}
-                                }
+                        "content": {
+                            "application/json": {
+                                "example": [
+                                    {
+                                        "id": 1,
+                                        "email": "user1@example.com",
+                                        "phone_number": "+48123456789",
+                                        "address": "ul. Przykładowa 123, Warszawa",
+                                        "date_of_birth": "1990-01-15"
+                                    }
+                                ]
                             }
                         }
                     }
@@ -235,25 +271,37 @@ swagger_json = {
                         "name": "user_id",
                         "in": "path",
                         "required": True,
-                        "type": "integer",
+                        "schema": {
+                            "type": "integer"
+                        },
                         "description": "ID of the user to retrieve"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "User details returned successfully",
-                        "schema": {
-                            "type": "object",
-                            "properties": {
-                                "id": {"type": "integer"},
-                                "email": {"type": "string"},
-                                "phone_number": {"type": "string"},
-                                "address": {"type": "string"},
-                                "date_of_birth": {"type": "string"}
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "id": 1,
+                                    "email": "user1@example.com",
+                                    "phone_number": "+48123456789",
+                                    "address": "ul. Przykładowa 123, Warszawa",
+                                    "date_of_birth": "1990-01-15"
+                                }
                             }
                         }
                     },
-                    "404": {"description": "User not found"}
+                    "404": {
+                        "description": "User not found",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "User not found"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -265,33 +313,45 @@ swagger_json = {
                         "name": "address",
                         "in": "query",
                         "required": True,
-                        "type": "string",
+                        "schema": {
+                            "type": "string"
+                        },
                         "description": "Address to search for (can be partial)"
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "List of users matching the address",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "id": {"type": "integer"},
-                                    "email": {"type": "string"},
-                                    "phone_number": {"type": "string"},
-                                    "address": {"type": "string"},
-                                    "date_of_birth": {"type": "string"}
-                                }
+                        "content": {
+                            "application/json": {
+                                "example": [
+                                    {
+                                        "id": 1,
+                                        "email": "user1@example.com",
+                                        "phone_number": "+48123456789",
+                                        "address": "ul. Przykładowa 123, Warszawa",
+                                        "date_of_birth": "1990-01-15"
+                                    }
+                                ]
                             }
                         }
                     },
-                    "400": {"description": "Address parameter is required"}
+                    "400": {
+                        "description": "Address parameter is required",
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "message": "Address parameter is required"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
     }
 }
+
 
 # Zapis do pliku
 with open('static/swagger.json', 'w') as f:

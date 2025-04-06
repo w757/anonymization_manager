@@ -1,4 +1,4 @@
-flask
-flask_sqlalchemy
-flask_restful
-flask_swagger_ui
+Flask==2.3.3
+Flask-SQLAlchemy==3.1.1
+Flask-RESTful==0.3.10
+flask-swagger-ui==4.11.1

@@ -26,28 +26,20 @@ def get_target_api_url(service_uuid):
         swagger_api = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
         return swagger_api.api_url if swagger_api else None
 
-# def apply_anonymization(value, method):
-#     methods = {
-#         "Masking": "***MASKED***",
-#         "Encryption": "***ENCRYPTED***",
-#         "Tokenization": "***TOKENIZED***",
-#         "Redaction": "[REDACTED]",
-#         "Pseudonymization": "PSEUDO-" + str(abs(hash(str(value)))),
-#         "Hashing": "HASH-" + str(hash(str(value)))
-#     }
-#     return methods.get(method, value)
-
 def get_endpoint_config(path, method, is_response):
     """Get anonymization config for endpoint"""
     with app.app_context():
+        # Normalize path for comparison (remove trailing slashes and query parameters)
+        base_path = path.split('?')[0].rstrip('/')
+        
         endpoint = Endpoint.query.options(
             joinedload(Endpoint.fields)
             .joinedload(Field.anonymization)
             .joinedload(FieldAnonymization.anonymization_method)
         ).filter(
             db.or_(
-                Endpoint.path == path.rstrip('/'),
-                Endpoint.path == '/' + path.lstrip('/')
+                Endpoint.path == base_path,
+                Endpoint.path == '/' + base_path.lstrip('/')
             ),
             Endpoint.method == method.upper()
         ).first()
@@ -97,14 +89,24 @@ def anonymize_payload(data, path, method, is_response):
 @app.before_request
 def before_request():
     """Anonymize incoming requests"""
-    if request.method in ['POST', 'PUT', 'PATCH'] and request.is_json:
-        try:
-            data = request.get_json()
-            anonymized_data = anonymize_payload(data, request.path, request.method, is_response=False)
-            request._cached_data = json.dumps(anonymized_data)
-            request._parsed_content_type = 'application/json'
-        except json.JSONDecodeError as e:
-            print(f"Request JSON decode error: {e}")
+    if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+        content_type = request.content_type or ''
+        
+        # Handle JSON requests
+        if 'application/json' in content_type and request.get_data():
+            try:
+                data = request.get_json()
+                anonymized_data = anonymize_payload(data, request.path, request.method, is_response=False)
+                request._cached_data = json.dumps(anonymized_data)
+                request._parsed_content_type = 'application/json'
+            except json.JSONDecodeError as e:
+                print(f"Request JSON decode error: {e}")
+        
+        # Handle form data
+        elif 'application/x-www-form-urlencoded' in content_type or 'multipart/form-data' in content_type:
+            form_data = request.form.to_dict()
+            anonymized_data = anonymize_payload(form_data, request.path, request.method, is_response=False)
+            request.form = anonymized_data
 
 @app.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
@@ -128,20 +130,29 @@ def proxy(path):
     target_url = f"{target_api_url.rstrip('/')}/{path.lstrip('/')}"
     
     try:
+        # Prepare request data
+        request_data = None
+        if hasattr(request, '_cached_data'):
+            request_data = request._cached_data
+        elif request.get_data():
+            request_data = request.get_data()
+        
         # Forward request to target API
         response = requests.request(
             method=request.method,
             url=target_url,
             headers={key: value for (key, value) in request.headers 
                     if key.lower() not in ['host', 'x-service-uuid']},
-            data=request.get_data(),
+            data=request_data,
+            params=request.args,
             cookies=request.cookies,
             allow_redirects=False,
             timeout=30
         )
 
         # Anonymize response if JSON
-        if 'application/json' in response.headers.get('Content-Type', ''):
+        content_type = response.headers.get('Content-Type', '').lower()
+        if 'application/json' in content_type and response.content:
             try:
                 response_data = response.json()
                 anonymized_data = anonymize_payload(
@@ -152,7 +163,7 @@ def proxy(path):
                     response.status_code,
                     dict(response.headers)
                 )
-            except json.JSONDecodeError as e:
+            except (json.JSONDecodeError, ValueError) as e:
                 print(f"Response JSON decode error: {e}")
                 pass
         
