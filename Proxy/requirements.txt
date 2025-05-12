@@ -14,3 +14,8 @@ email_validator
 pyap
 cryptography
 python-dateutil
+flask_swagger_ui
+faker
+gender-guesser
+python-dateutil
+datetime
