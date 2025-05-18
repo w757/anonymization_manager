@@ -15,7 +15,35 @@ def extract_year(date_string):
         return None  # Jeśli nie uda się sparsować daty
 
 
-def mask_value(value, data_category):
+
+
+
+
+# DODAWANIE SZUMU DO DANYCH 
+def add_noise_to_value(value, data_category):
+    return "***add_noise_to_value***"
+
+
+# UOGOLNIENIE DANYCH
+def generalize_value(value, data_category):
+
+    if data_category == 'birth_date':
+        print("a")
+        return extract_year(value)
+
+    elif data_category == 'postal_code':
+        return value[:2] + 'XXX'  # np. 01XXX
+    elif data_category == 'address':
+        return value.split(',')[0]  # np. tylko ulica bez miasta
+    elif data_category == 'phone':
+        return value[:3] + 'XXXXXXX'
+    elif data_category == 'email':
+        return value.split('@')[0][:3] + '***@***'
+   
+
+
+# GENEROWANIE FALSZYWYCH DANYCH 
+def fake_value (value, data_category):
     fake = Faker('pl_PL')
 
 
@@ -24,10 +52,7 @@ def mask_value(value, data_category):
     elif data_category == 'last_name':
         return fake.last_name()
     elif data_category == 'birth_date':
-        parsed_date = parser.parse(value)
-        year_offset = random.randint(-5, 5)
         new_birth_date = fake.date_of_birth(minimum_age=18, maximum_age=90)
-        new_birth_date = new_birth_date.replace(year=parsed_date.year + year_offset)
         return new_birth_date.isoformat()
     elif data_category == 'gender':
         return random.choice(['Male', 'Female', 'Other'])
@@ -56,25 +81,6 @@ def mask_value(value, data_category):
     else:
         return "xxx"
 
-# DO USUNIECIA ???
-def aggregate_value(value, data_category):
-    return "***aggregate_value***"
-
-def suppress_value(value, data_category):
-    return "***suppress_value***"
-
-def generalize_value(value, data_category):
-
-    if data_category == 'birth_date':
-        print("a")
-        return extract_year(value)
-
-    elif data_category == 'postal_code':
-        return value[:2] + 'XXX'  # np. 01XXX
-    elif data_category == 'address':
-        return value.split(',')[0]  # np. tylko ulica bez miasta
-    elif data_category == 'phone':
-        return value[:3] + 'XXXXXXX'
-    elif data_category == 'email':
-        return value.split('@')[0][:3] + '***@***'
-   
+# MASKOWANIE DANYCH 
+def mask_value(value, data_category):
+    return "***MASK***"

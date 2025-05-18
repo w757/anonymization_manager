@@ -27,9 +27,10 @@ DATA_CATEGORIES = [
     ('postal_code', 'Postal code'),
     ('city', 'City'),
     ('country', 'Country'),
-    ('login', 'Login'),
     ('password', 'Password'),
-    ('other', 'Other')
+    ('age', 'Age'),
+    ('height', 'Height'),
+    ('salary', 'Salary')
 ]
 
 class AnonymizationForm(FlaskForm):

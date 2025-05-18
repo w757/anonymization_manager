@@ -1,9 +1,9 @@
 {
     "openapi": "3.0.3",
     "info": {
-        "title": "Authentication API",
+        "title": "User Management API",
         "version": "1.0.0",
-        "description": "API for user authentication and registration"
+        "description": "API for managing user data with comprehensive personal information"
     },
     "paths": {
         "/register": {
@@ -16,35 +16,72 @@
                             "schema": {
                                 "type": "object",
                                 "properties": {
+                                    "first_name": {
+                                        "type": "string"
+                                    },
+                                    "last_name": {
+                                        "type": "string"
+                                    },
+                                    "birth_date": {
+                                        "type": "string"
+                                    },
+                                    "gender": {
+                                        "type": "string"
+                                    },
+                                    "pesel": {
+                                        "type": "string"
+                                    },
                                     "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
+                                        "type": "string"
                                     },
-                                    "password": {
-                                        "type": "string",
-                                        "example": "securePassword123"
-                                    },
-                                    "phone_number": {
-                                        "type": "string",
-                                        "example": "+48123456789"
+                                    "phone": {
+                                        "type": "string"
                                     },
                                     "address": {
-                                        "type": "string",
-                                        "example": "ul. Przyk\u0142adowa 123, Warszawa"
+                                        "type": "string"
                                     },
-                                    "date_of_birth": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "1990-01-15"
+                                    "street": {
+                                        "type": "string"
+                                    },
+                                    "postal_code": {
+                                        "type": "string"
+                                    },
+                                    "city": {
+                                        "type": "string"
+                                    },
+                                    "country": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "age": {
+                                        "type": "integer"
+                                    },
+                                    "height": {
+                                        "type": "number"
+                                    },
+                                    "salary": {
+                                        "type": "number"
                                     }
                                 },
                                 "required": [
+                                    "first_name",
+                                    "last_name",
+                                    "birth_date",
+                                    "gender",
+                                    "pesel",
                                     "email",
-                                    "password",
-                                    "phone_number",
+                                    "phone",
                                     "address",
-                                    "date_of_birth"
+                                    "street",
+                                    "postal_code",
+                                    "city",
+                                    "country",
+                                    "password",
+                                    "age",
+                                    "height",
+                                    "salary"
                                 ]
                             }
                         }
@@ -52,24 +89,10 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "User registered successfully",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "User registered successfully"
-                                }
-                            }
-                        }
+                        "description": "User registered successfully"
                     },
                     "400": {
-                        "description": "User with this email already exists",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "User with this email already exists"
-                                }
-                            }
-                        }
+                        "description": "Validation error"
                     }
                 }
             }
@@ -85,13 +108,10 @@
                                 "type": "object",
                                 "properties": {
                                     "email": {
-                                        "type": "string",
-                                        "format": "email",
-                                        "example": "user@example.com"
+                                        "type": "string"
                                     },
                                     "password": {
-                                        "type": "string",
-                                        "example": "securePassword123"
+                                        "type": "string"
                                     }
                                 },
                                 "required": [
@@ -104,24 +124,13 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Login successful",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Login successful"
-                                }
-                            }
-                        }
+                        "description": "Login successful"
+                    },
+                    "400": {
+                        "description": "Missing credentials"
                     },
                     "401": {
-                        "description": "Invalid credentials",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Invalid credentials"
-                                }
-                            }
-                        }
+                        "description": "Invalid credentials"
                     }
                 }
             }
@@ -137,10 +146,13 @@
                                 "example": [
                                     {
                                         "id": 1,
-                                        "email": "user1@example.com",
-                                        "phone_number": "+48123456789",
-                                        "address": "ul. Przyk\u0142adowa 123, Warszawa",
-                                        "date_of_birth": "1990-01-15"
+                                        "first_name": "Jan",
+                                        "last_name": "Kowalski",
+                                        "email": "jan.kowalski@example.com",
+                                        "phone": "+48123456789",
+                                        "address": "ul. Przyk\u0142adowa 123",
+                                        "city": "Warszawa",
+                                        "country": "Polska"
                                     }
                                 ]
                             }
@@ -159,8 +171,7 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
-                        },
-                        "description": "ID of the user to retrieve"
+                        }
                     }
                 ],
                 "responses": {
@@ -170,10 +181,21 @@
                             "application/json": {
                                 "example": {
                                     "id": 1,
-                                    "email": "user1@example.com",
-                                    "phone_number": "+48123456789",
-                                    "address": "ul. Przyk\u0142adowa 123, Warszawa",
-                                    "date_of_birth": "1990-01-15"
+                                    "first_name": "Jan",
+                                    "last_name": "Kowalski",
+                                    "birth_date": "1990-01-15",
+                                    "gender": "male",
+                                    "pesel": "90011512345",
+                                    "email": "jan.kowalski@example.com",
+                                    "phone": "+48123456789",
+                                    "address": "ul. Przyk\u0142adowa 123",
+                                    "street": "ul. Przyk\u0142adowa 123",
+                                    "postal_code": "00-001",
+                                    "city": "Warszawa",
+                                    "country": "Polska",
+                                    "age": 34,
+                                    "height": 180.5,
+                                    "salary": 7500.0
                                 }
                             }
                         }
@@ -184,50 +206,6 @@
                             "application/json": {
                                 "example": {
                                     "message": "User not found"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/users/by_address": {
-            "get": {
-                "summary": "Get users by address",
-                "parameters": [
-                    {
-                        "name": "address",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Address to search for (can be partial)"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of users matching the address",
-                        "content": {
-                            "application/json": {
-                                "example": [
-                                    {
-                                        "id": 1,
-                                        "email": "user1@example.com",
-                                        "phone_number": "+48123456789",
-                                        "address": "ul. Przyk\u0142adowa 123, Warszawa",
-                                        "date_of_birth": "1990-01-15"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Address parameter is required",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Address parameter is required"
                                 }
                             }
                         }

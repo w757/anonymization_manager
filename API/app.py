@@ -3,154 +3,165 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
 from flask_swagger_ui import get_swaggerui_blueprint
 import os
+import json
 
 app = Flask(__name__)
 api = Api(app)
 
-# Konfiguracja bazy danych SQLite
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-# Model użytkownika
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=False)
+    birth_date = db.Column(db.String(10), nullable=False)
+    gender = db.Column(db.String(10), nullable=False)
+    pesel = db.Column(db.String(11), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(120), nullable=False)
-    phone_number = db.Column(db.String(20), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
     address = db.Column(db.String(200), nullable=False)
-    date_of_birth = db.Column(db.String(10), nullable=False)  # Format: YYYY-MM-DD
+    street = db.Column(db.String(100), nullable=False)
+    postal_code = db.Column(db.String(10), nullable=False)
+    city = db.Column(db.String(50), nullable=False)
+    country = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(120), nullable=False)
+    age = db.Column(db.Integer, nullable=False)
+    height = db.Column(db.Float, nullable=False)
+    salary = db.Column(db.Float, nullable=False)
 
     def __repr__(self):
         return f'<User {self.email}>'
 
-# Tworzenie bazy danych
 with app.app_context():
     db.create_all()
 
-# Rejestracja użytkownika
 class Register(Resource):
     def post(self):
         data = request.get_json()
-        email = data.get('email')
-        password = data.get('password')
-        phone_number = data.get('phone_number')
-        address = data.get('address')
-        date_of_birth = data.get('date_of_birth')
+        required_fields = [
+            'first_name', 'last_name', 'birth_date', 'gender', 'pesel',
+            'email', 'phone', 'address', 'street', 'postal_code',
+            'city', 'country', 'password', 'age', 'height', 'salary'
+        ]
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return {'message': f'Missing required fields: {", ".join(missing_fields)}'}, 400
 
-        # Sprawdzenie, czy użytkownik już istnieje
-        if User.query.filter_by(email=email).first():
+        if User.query.filter_by(email=data['email']).first():
             return {'message': 'User with this email already exists'}, 400
+        if User.query.filter_by(pesel=data['pesel']).first():
+            return {'message': 'User with this PESEL already exists'}, 400
 
-        # Tworzenie nowego użytkownika
         new_user = User(
-            email=email,
-            password=password,
-            phone_number=phone_number,
-            address=address,
-            date_of_birth=date_of_birth
+            first_name=data['first_name'],
+            last_name=data['last_name'],
+            birth_date=data['birth_date'],
+            gender=data['gender'],
+            pesel=data['pesel'],
+            email=data['email'],
+            phone=data['phone'],
+            address=data['address'],
+            street=data['street'],
+            postal_code=data['postal_code'],
+            city=data['city'],
+            country=data['country'],
+            password=data['password'],
+            age=data['age'],
+            height=data['height'],
+            salary=data['salary']
         )
+
         db.session.add(new_user)
         db.session.commit()
 
         return {'message': 'User registered successfully'}, 201
 
-# Logowanie użytkownika
 class Login(Resource):
     def post(self):
         data = request.get_json()
         email = data.get('email')
         password = data.get('password')
 
+        if not email or not password:
+            return {'message': 'Email and password are required'}, 400
+
         user = User.query.filter_by(email=email, password=password).first()
 
         if user:
             return {'message': 'Login successful'}, 200
         else:
-            return {'message': 'Invalid credentials'}, 401
+            return {'message': 'Invalid email or password'}, 401
 
-# Pobieranie użytkowników
 class Users(Resource):
     def get(self):
         users = User.query.all()
         users_data = [
             {
                 'id': user.id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
                 'email': user.email,
-                'phone_number': user.phone_number,
+                'phone': user.phone,
                 'address': user.address,
-                'date_of_birth': user.date_of_birth
+                'city': user.city,
+                'country': user.country
             } for user in users
         ]
         return jsonify(users_data)
 
-# Pobieranie użytkownika po ID
 class GetUserByID(Resource):
     def get(self, user_id):
         user = User.query.get(user_id)
         if user:
             user_data = {
                 'id': user.id,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'birth_date': user.birth_date,
+                'gender': user.gender,
+                'pesel': user.pesel,
                 'email': user.email,
-                'phone_number': user.phone_number,
+                'phone': user.phone,
                 'address': user.address,
-                'date_of_birth': user.date_of_birth
+                'street': user.street,
+                'postal_code': user.postal_code,
+                'city': user.city,
+                'country': user.country,
+                'age': user.age,
+                'height': user.height,
+                'salary': user.salary
             }
             return jsonify(user_data)
         else:
             return {'message': 'User not found'}, 404
 
-# Pobieranie użytkowników po adresie
-class GetUsersByAddress(Resource):
-    def get(self):
-        address = request.args.get('address')
-        if not address:
-            return {'message': 'Address parameter is required'}, 400
-        
-        users = User.query.filter(User.address.contains(address)).all()
-        users_data = [
-            {
-                'id': user.id,
-                'email': user.email,
-                'phone_number': user.phone_number,
-                'address': user.address,
-                'date_of_birth': user.date_of_birth
-            } for user in users
-        ]
-        return jsonify(users_data)
-
-# Dodawanie zasobów do API
 api.add_resource(Register, '/register')
 api.add_resource(Login, '/login')
 api.add_resource(Users, '/users')
 api.add_resource(GetUserByID, '/users/<int:user_id>')
-api.add_resource(GetUsersByAddress, '/users/by_address')
 
-# Konfiguracja Swagger UI
-SWAGGER_URL = '/api/docs'  # URL dla Swagger UI
-API_URL = '/static/swagger.json'  # URL dla pliku swagger.json
+SWAGGER_URL = '/api/docs'
+API_URL = '/static/swagger.json'
 
 swaggerui_blueprint = get_swaggerui_blueprint(
     SWAGGER_URL,
     API_URL,
-    config={
-        'app_name': "Authentication API"
-    }
+    config={'app_name': "User Management API"}
 )
 
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
-# Tworzenie katalogu `static`, jeśli nie istnieje
 if not os.path.exists('static'):
     os.makedirs('static')
 
-# Zapis definicji Swaggera do pliku `static/swagger.json`
 swagger_json = {
     "openapi": "3.0.3",
     "info": {
-        "title": "Authentication API",
+        "title": "User Management API",
         "version": "1.0.0",
-        "description": "API for user authentication and registration"
+        "description": "API for managing user data with comprehensive personal information"
     },
     "paths": {
         "/register": {
@@ -163,38 +174,35 @@ swagger_json = {
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "email": {"type": "string", "format": "email", "example": "user@example.com"},
-                                    "password": {"type": "string", "example": "securePassword123"},
-                                    "phone_number": {"type": "string", "example": "+48123456789"},
-                                    "address": {"type": "string", "example": "ul. Przykładowa 123, Warszawa"},
-                                    "date_of_birth": {"type": "string", "format": "date", "example": "1990-01-15"}
+                                    "first_name": {"type": "string"},
+                                    "last_name": {"type": "string"},
+                                    "birth_date": {"type": "string"},
+                                    "gender": {"type": "string"},
+                                    "pesel": {"type": "string"},
+                                    "email": {"type": "string"},
+                                    "phone": {"type": "string"},
+                                    "address": {"type": "string"},
+                                    "street": {"type": "string"},
+                                    "postal_code": {"type": "string"},
+                                    "city": {"type": "string"},
+                                    "country": {"type": "string"},
+                                    "password": {"type": "string"},
+                                    "age": {"type": "integer"},
+                                    "height": {"type": "number"},
+                                    "salary": {"type": "number"}
                                 },
-                                "required": ["email", "password", "phone_number", "address", "date_of_birth"]
+                                "required": [
+                                    "first_name", "last_name", "birth_date", "gender", "pesel",
+                                    "email", "phone", "address", "street", "postal_code",
+                                    "city", "country", "password", "age", "height", "salary"
+                                ]
                             }
                         }
                     }
                 },
                 "responses": {
-                    "201": {
-                        "description": "User registered successfully",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "User registered successfully"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "User with this email already exists",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "User with this email already exists"
-                                }
-                            }
-                        }
-                    }
+                    "201": {"description": "User registered successfully"},
+                    "400": {"description": "Validation error"}
                 }
             }
         },
@@ -208,8 +216,8 @@ swagger_json = {
                             "schema": {
                                 "type": "object",
                                 "properties": {
-                                    "email": {"type": "string", "format": "email", "example": "user@example.com"},
-                                    "password": {"type": "string", "example": "securePassword123"}
+                                    "email": {"type": "string"},
+                                    "password": {"type": "string"}
                                 },
                                 "required": ["email", "password"]
                             }
@@ -217,26 +225,9 @@ swagger_json = {
                     }
                 },
                 "responses": {
-                    "200": {
-                        "description": "Login successful",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Login successful"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Invalid credentials",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Invalid credentials"
-                                }
-                            }
-                        }
-                    }
+                    "200": {"description": "Login successful"},
+                    "400": {"description": "Missing credentials"},
+                    "401": {"description": "Invalid credentials"}
                 }
             }
         },
@@ -251,10 +242,13 @@ swagger_json = {
                                 "example": [
                                     {
                                         "id": 1,
-                                        "email": "user1@example.com",
-                                        "phone_number": "+48123456789",
-                                        "address": "ul. Przykładowa 123, Warszawa",
-                                        "date_of_birth": "1990-01-15"
+                                        "first_name": "Jan",
+                                        "last_name": "Kowalski",
+                                        "email": "jan.kowalski@example.com",
+                                        "phone": "+48123456789",
+                                        "address": "ul. Przykładowa 123",
+                                        "city": "Warszawa",
+                                        "country": "Polska"
                                     }
                                 ]
                             }
@@ -273,8 +267,7 @@ swagger_json = {
                         "required": True,
                         "schema": {
                             "type": "integer"
-                        },
-                        "description": "ID of the user to retrieve"
+                        }
                     }
                 ],
                 "responses": {
@@ -284,10 +277,21 @@ swagger_json = {
                             "application/json": {
                                 "example": {
                                     "id": 1,
-                                    "email": "user1@example.com",
-                                    "phone_number": "+48123456789",
-                                    "address": "ul. Przykładowa 123, Warszawa",
-                                    "date_of_birth": "1990-01-15"
+                                    "first_name": "Jan",
+                                    "last_name": "Kowalski",
+                                    "birth_date": "1990-01-15",
+                                    "gender": "male",
+                                    "pesel": "90011512345",
+                                    "email": "jan.kowalski@example.com",
+                                    "phone": "+48123456789",
+                                    "address": "ul. Przykładowa 123",
+                                    "street": "ul. Przykładowa 123",
+                                    "postal_code": "00-001",
+                                    "city": "Warszawa",
+                                    "country": "Polska",
+                                    "age": 34,
+                                    "height": 180.5,
+                                    "salary": 7500.00
                                 }
                             }
                         }
@@ -304,59 +308,12 @@ swagger_json = {
                     }
                 }
             }
-        },
-        "/users/by_address": {
-            "get": {
-                "summary": "Get users by address",
-                "parameters": [
-                    {
-                        "name": "address",
-                        "in": "query",
-                        "required": True,
-                        "schema": {
-                            "type": "string"
-                        },
-                        "description": "Address to search for (can be partial)"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "List of users matching the address",
-                        "content": {
-                            "application/json": {
-                                "example": [
-                                    {
-                                        "id": 1,
-                                        "email": "user1@example.com",
-                                        "phone_number": "+48123456789",
-                                        "address": "ul. Przykładowa 123, Warszawa",
-                                        "date_of_birth": "1990-01-15"
-                                    }
-                                ]
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Address parameter is required",
-                        "content": {
-                            "application/json": {
-                                "example": {
-                                    "message": "Address parameter is required"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 }
 
-
-# Zapis do pliku
 with open('static/swagger.json', 'w') as f:
-    import json
     json.dump(swagger_json, f, indent=4)
 
 if __name__ == '__main__':
-    app.run(port=8080)
+    app.run(port=8080, debug=True)

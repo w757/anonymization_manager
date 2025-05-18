@@ -114,7 +114,7 @@ def anonymize_item(item, field_config, service_uuid, path, method, is_response):
 
     swagger_api = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
     encryption_key = swagger_api.encryption_key if swagger_api else None
-
+   
     for key, value in item.items():
         if key in field_config:
             data_category = get_data_category(service_uuid, path, method, key, is_response)
