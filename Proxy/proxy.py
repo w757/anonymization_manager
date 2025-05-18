@@ -58,52 +58,6 @@ def get_endpoint_config(path, method, is_response):
                 field.anonymization.anonymization_method)
         }
 
-# def anonymize_item(item, field_config, service_uuid):
-#     # item - json z danymi 
-#     # field_config - {'date_of_birth': 'Generalization', 'phone_number': 'Encryption'}
-
-#     """Anonymize single item according to config, passing encryption_key and data_category"""
-#     if not isinstance(item, dict):
-#         return item
-        
-#     anonymized = {}
-    
-#     # Pobieramy encryption_key z bazy dla service_uuid
-#     swagger_api = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
-#     encryption_key = swagger_api.encryption_key if swagger_api else None
-
-
-#     print(item)
-#     for key, value in item.items():
-
-#         if key in field_config:
-#             # Pobieramy data_category z bazy dla danego pola
-#             field = Field.query.filter_by(name=key).first()
-#             data_category = field.data_category if field else None
-
-#             # Przekazujemy encryption_key oraz data_category do apply_anonymization
-#             anonymized[key] = apply_anonymization(value, field_config[key], encryption_key, data_category)
-#         elif isinstance(value, dict):
-            
-#             anonymized[key] = anonymize_item(value, field_config, service_uuid)
-#         elif isinstance(value, list):
-            
-#             anonymized[key] = [anonymize_item(i, field_config, service_uuid) if isinstance(i, dict) else i 
-#                             for i in value]
-#         else:
-            
-#             # config = field_config[key]
-#             # field = Field.query.get(config['field_id'])
-#             # data_category = field.data_category if field else None
-
-#             field = Field.query.filter_by(name=key).first()
-#             data_category = get_data_category(service_uuid, path, method, key, is_response=False)
-
-
-            
-#             anonymized[key] = value
-
-#     return anonymized
 
 
 def anonymize_item(item, field_config, service_uuid, path, method, is_response):
@@ -118,7 +72,7 @@ def anonymize_item(item, field_config, service_uuid, path, method, is_response):
     for key, value in item.items():
         if key in field_config:
             data_category = get_data_category(service_uuid, path, method, key, is_response)
-            
+            print(data_category)
             anonymized[key] = apply_anonymization(value, field_config[key], encryption_key, data_category)
 
         elif isinstance(value, dict):
@@ -155,16 +109,17 @@ def anonymize_payload(data, path, method, is_response, service_uuid):
 def get_data_category(service_uuid, path, method, field_name, is_response):
     swagger = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
     if not swagger:
-        
+       
         return None
 
     endpoint = Endpoint.query.filter_by(
         swagger_id=swagger.id,
-        path = '/' + path,
+        path = path,
         method=method.upper()
     ).first()
-
+    
     if not endpoint:
+        
         return None
 
     field = Field.query.filter_by(

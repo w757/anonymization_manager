@@ -2,7 +2,7 @@ from dateutil import parser
 import random
 import string
 from faker import Faker
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil import parser
 
 
@@ -14,14 +14,45 @@ def extract_year(date_string):
     except ValueError:
         return None  # Jeśli nie uda się sparsować daty
 
-
-
-
-
+def noise_percent():
+    return random.uniform(0.8, 1.2)
 
 # DODAWANIE SZUMU DO DANYCH 
 def add_noise_to_value(value, data_category):
-    return "***add_noise_to_value***"
+    print (value)
+    print (data_category)
+    
+    if data_category in ["age", "height", "salary"]:
+        if isinstance(value, (int)): 
+            return round(value * noise_percent())
+        elif isinstance(value, (float)): 
+            return round(value * noise_percent(),2)
+    
+
+    elif data_category == "birth_date":
+            input_type = type(value)
+            
+            # Obsługa daty w postaci stringa
+            if isinstance(value, str):
+                try:
+                    parsed_date = datetime.strptime(value, "%Y-%m-%d")
+                except ValueError:
+                    return value  # niepoprawny format - zwróć bez zmian
+            elif isinstance(value, datetime):
+                parsed_date = value
+            else:
+                return value  # nieobsługiwany typ
+
+            # Zakłócenie w zakresie 7–36 dni
+            days_noise = round(random.uniform(-108, 108))
+            noisy_date = parsed_date + timedelta(days=days_noise)
+
+            # Zwróć w tym samym formacie, w jakim podano wejście
+            return noisy_date.strftime("%Y-%m-%d") if input_type == str else noisy_date
+
+    else:
+        # Jeśli typ danych jest nieobsługiwany, zwróć oryginalną wartość
+        return value 
 
 
 # UOGOLNIENIE DANYCH
@@ -32,7 +63,7 @@ def generalize_value(value, data_category):
         return extract_year(value)
 
     elif data_category == 'postal_code':
-        return value[:2] + 'XXX'  # np. 01XXX
+        return value[:3] + 'XXX'  # np. 01XXX
     elif data_category == 'address':
         return value.split(',')[0]  # np. tylko ulica bez miasta
     elif data_category == 'phone':

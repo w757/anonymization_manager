@@ -30,17 +30,15 @@
                             <code>{{ example_value }}</code>
                         </div>
                     </div>
-
-                    <div class="mb-3">
                     {% endif %}
-                    
+
                     {% if field.description %}
                     <div class="mb-2">
                         <strong>Description:</strong>
                         <p class="text-muted mb-0">{{ field.description }}</p>
                     </div>
                     {% endif %}
-                    
+
                     {% if field.anonymization and field.anonymization.anonymization_method %}
                     <div>
                         <strong>Current Method:</strong>
@@ -85,13 +83,13 @@
                             {% endif %}
                         </select>
                     </div>
+                </div>
 
-                    <!-- W sekcji formularza dodaj nowe pole -->
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <label class="form-label">Data Category</label>
-                            {{ form.data_category(class="form-select") }}
-                        </div>
+                <!-- Dodatkowe pole data_category -->
+                <div class="row mb-3" id="data-category-container" style="display: none;">
+                    <div class="col-md-12">
+                        <label class="form-label">Data Category</label>
+                        {{ form.data_category(class="form-select") }}
                     </div>
                 </div>
 
@@ -109,25 +107,62 @@
     </div>
 </div>
 
+<!-- SCRIPT Z LOGIKĄ JS -->
 <script>
-// Funkcja do aktualizacji metod anonimizacji
+// --- KONFIG: Kategorie danych powiązane z metodami ---
+const DATA_CATEGORIES_BY_METHOD = {
+    Generalization: [
+        {value: "birth_date", label: "Birth date"},
+        {value: "age", label: "Age"},
+        {value: "height", label: "Height"},
+        {value: "salary", label: "Salary"},
+        {value: "address", label: "Address"},
+        {value: "postal_code", label: "Postal code"}
+    ],
+    Fabrication: [
+        {value: "first_name", label: "First name"},
+        {value: "last_name", label: "Last name"},
+        {value: "birth_date", label: "Birth date"},
+        {value: "gender", label: "Gender"},
+        {value: "pesel", label: "PESEL"},
+        {value: "email", label: "Email"},
+        {value: "phone", label: "Phone number"},
+        {value: "address", label: "Address"},
+        {value: "street", label: "Street"},
+        {value: "postal_code", label: "Postal code"},
+        {value: "city", label: "City"},
+        {value: "country", label: "Country"},
+        {value: "password", label: "Password"},
+        {value: "age", label: "Age"},
+        {value: "height", label: "Height"},
+        {value: "salary", label: "Salary"}
+    ],
+    Noise: [
+        {value: "birth_date", label: "Birth date"},
+        {value: "age", label: "Age"},
+        {value: "height", label: "Height"},
+        {value: "salary", label: "Salary"}
+    ],
+};
+
+
+
+
+// --- Ładowanie metod anonimizacji po wybraniu kategorii ---
 function updateAnonymizationMethods() {
     const category = document.getElementById('category').value;
     const methodSelect = document.getElementById('anonymization_method');
-    
+
     if (!category) {
         methodSelect.innerHTML = '<option value="" disabled selected>Select an anonymization method</option>';
         return;
     }
 
-    // Pokazujemy loader podczas ładowania
     methodSelect.innerHTML = '<option value="" disabled selected>Loading methods...</option>';
 
     fetch('/get_anonymization_methods', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
+        headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ category: category })
     })
     .then(response => {
@@ -136,7 +171,7 @@ function updateAnonymizationMethods() {
     })
     .then(data => {
         methodSelect.innerHTML = '<option value="" disabled selected>Select an anonymization method</option>';
-        
+
         if (data.length === 0) {
             methodSelect.innerHTML = '<option value="" disabled selected>No methods available for this category</option>';
             return;
@@ -146,8 +181,7 @@ function updateAnonymizationMethods() {
             const option = new Option(method.name, method.id);
             methodSelect.add(option);
         });
-        
-        // Ustaw wcześniej wybraną metodę jeśli istnieje
+
         const currentMethodId = '{{ current_method.id if current_method else "" }}';
         if (currentMethodId) {
             methodSelect.value = currentMethodId;
@@ -159,16 +193,49 @@ function updateAnonymizationMethods() {
     });
 }
 
-// Inicjalizacja przy ładowaniu strony
-document.addEventListener('DOMContentLoaded', function() {
+// --- Obsługa dynamicznego pokazywania pola data_category ---
+document.addEventListener('DOMContentLoaded', function () {
     const categorySelect = document.getElementById('category');
+    const methodSelect = document.getElementById('anonymization_method');
+    const dataCategoryContainer = document.getElementById('data-category-container');
+    const dataCategorySelect = document.querySelector('[name="data_category"]');
+
+    function toggleDataCategory(methodName) {
+        const options = DATA_CATEGORIES_BY_METHOD[methodName];
+        if (options) {
+            dataCategoryContainer.style.display = 'block';
+            dataCategorySelect.required = true;
+            dataCategorySelect.innerHTML = '<option value="">-- Select data category --</option>';
+            options.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                dataCategorySelect.appendChild(option);
+            });
+        } else {
+            dataCategoryContainer.style.display = 'none';
+            dataCategorySelect.required = false;
+            dataCategorySelect.innerHTML = '<option value="">-- Select data category --</option>';
+        }
+    }
+
+    // Inicjalizacja
     if (categorySelect.value) {
         updateAnonymizationMethods();
     }
-    
-    // Walidacja formularza
+
+    methodSelect.addEventListener('change', function () {
+        const selectedText = methodSelect.options[methodSelect.selectedIndex].text;
+        toggleDataCategory(selectedText);
+    });
+
+    if (methodSelect.value) {
+        const selectedText = methodSelect.options[methodSelect.selectedIndex].text;
+        toggleDataCategory(selectedText);
+    }
+
+    // Walidacja przed wysłaniem
     document.getElementById('anonymization-form').addEventListener('submit', function(e) {
-        const methodSelect = document.getElementById('anonymization_method');
         if (!methodSelect.value) {
             e.preventDefault();
             alert('Please select an anonymization method');
@@ -176,8 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
-
 </script>
 
 {% endblock %}

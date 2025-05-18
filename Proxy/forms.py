@@ -2,7 +2,7 @@
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField
-from wtforms.validators import DataRequired, URL
+from wtforms.validators import DataRequired, URL, Optional
 from models import AnonymizationMethod, db
 import uuid
 
@@ -50,7 +50,7 @@ class AnonymizationForm(FlaskForm):
     data_category = SelectField(
         "Data Category",
         choices=DATA_CATEGORIES,
-        validators=[DataRequired()]
+        validators=[Optional()]
     )
 
     submit = SubmitField("Save")

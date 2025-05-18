@@ -1,5 +1,4 @@
 
-
 import os
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
@@ -17,16 +16,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SECRET_KEY'] = 'supersecretkey'
 db.init_app(app)
 
+    
+
 def init_db():
     with app.app_context():
         if not os.path.exists("database.db"):
             db.create_all()
             if not AnonymizationMethod.query.first():
                 default_methods = [
+                    ("Noise", "Anonymization"),
                     ("Generalization", "Anonymization"),
-                    ("Suppression", "Anonymization"),
-                    ("Aggregation", "Anonymization"),
                     ("Masking", "Anonymization"),
+                    ("Fabrication", "Anonymization"),
                     ("Hashing", "Pseudonymization"),
                     ("Encryption", "Pseudonymization")
                 ]
@@ -258,7 +259,12 @@ def edit_anonymization(field_id):
             db.session.rollback()
             flash(f"Error saving changes: {str(e)}", "danger")
 
-    # Reszta kodu pozostaje bez zmian
+
+    # Ustal, czy ukryć pole category dla metod typu Hashing i Encryption
+    hide_category_field = False
+    if field.anonymization and field.anonymization.anonymization_method:
+        hide_category_field = field.anonymization.anonymization_method.name in ['Hashing', 'Encryption']
+
     return render_template(
         "edit_anonymization.html",
         form=form,
@@ -266,8 +272,11 @@ def edit_anonymization(field_id):
         endpoint=endpoint,
         swagger=swagger,
         example_value=example_value,
-        current_method=field.anonymization.anonymization_method if field.anonymization else None
+        current_method=field.anonymization.anonymization_method if field.anonymization else None,
+        hide_category_field=hide_category_field
     )
+
+
 
 @app.route("/delete_swagger/<int:id>", methods=["POST"])
 def delete_swagger(id):
