@@ -44,9 +44,9 @@
                             </button>
                         </td>
                         <td>
-                            <a href="{{ url_for('swagger_details', id=swagger.id) }}" 
+                            <a href="{{ url_for('swagger.swagger_details', id=swagger.id) }}" 
                                class="btn btn-sm btn-primary">Details</a>
-                            <form method="POST" action="{{ url_for('delete_swagger', id=swagger.id) }}" 
+                            <form method="POST" action="{{ url_for('swagger.delete_swagger', id=swagger.id) }}" 
                                   style="display: inline;">
                                 <button type="submit" class="btn btn-sm btn-danger"
                                         onclick="return confirm('Are you sure?')">
