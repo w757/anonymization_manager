@@ -1,12 +1,14 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
 from flask import Flask
 from config import Config
-from extensions import db, login_manager
+from common.extensions import db, login_manager
 from views import register_blueprints
 
 from flask import Flask
-from extensions import db
-from models import AnonymizationMethod
-from views import register_blueprints
+from common.models import AnonymizationMethod
 
 def create_app():
     app = Flask(__name__)

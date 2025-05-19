@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
-from models import Field, AnonymizationMethod, FieldAnonymization
+from common.models import Field, AnonymizationMethod, FieldAnonymization
 from forms import AnonymizationForm
-from extensions import db
+from common.extensions import db
 import json
 
 anonymization_bp = Blueprint("anonymization", __name__)

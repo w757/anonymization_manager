@@ -1,5 +1,5 @@
-from models import Field, FieldAnonymization, Endpoint
-from extensions import db
+from common.models import Field, FieldAnonymization, Endpoint
+from common.extensions import db
 
 def extract_schema_properties(schema):
     if not schema:

@@ -3,7 +3,7 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField,PasswordField
 from wtforms.validators import DataRequired, URL, Optional, EqualTo, Length
-from models import AnonymizationMethod, db
+from common.models import AnonymizationMethod, db
 import uuid
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField

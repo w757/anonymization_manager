@@ -1,7 +1,12 @@
+import sys
+import os
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+
+from config import Config
 import json
 from flask import Flask, request, make_response
 import requests
-from models import db, SwaggerAPI, Endpoint, Field, FieldAnonymization, AnonymizationMethod
+from common.models import db, SwaggerAPI, Endpoint, Field, FieldAnonymization, AnonymizationMethod
 import uuid
 from sqlalchemy.orm import joinedload
 from anonymization.process_data import apply_anonymization
