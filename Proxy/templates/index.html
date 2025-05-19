@@ -15,14 +15,7 @@
         <div class="mb-3">
             <label class="form-label">Swagger JSON</label>
             {{ form.swagger_json(class="form-control", rows="10", placeholder="Paste your Swagger/OpenAPI JSON here") }}
-        </div>
-        
-        <div class="mb-3">
-            <label class="form-label">Service UUID</label>
-            <input type="text" class="form-control" value="{{ form.service_uuid.data }}" readonly>
-            <small class="text-muted">This unique identifier will be used to route requests</small>
-        </div>
-    
+        </div>          
         <button type="submit" class="btn btn-primary">Upload</button>
     </form>
 

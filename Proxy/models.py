@@ -33,7 +33,6 @@ class SwaggerAPI(db.Model):
 
 
 
-
 class Endpoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     swagger_id = db.Column(db.Integer, db.ForeignKey('swagger_api.id'), nullable=False)

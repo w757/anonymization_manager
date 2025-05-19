@@ -4,7 +4,7 @@ import uuid
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization, User
-from forms import SwaggerForm, AnonymizationForm
+from forms import SwaggerForm, AnonymizationForm, RegisterForm
 import json
 #from data_identifier import analyze_field
 import secrets
@@ -71,7 +71,7 @@ def login():
 
 
 
-from forms import RegisterForm  # importuj formularz
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -82,14 +82,14 @@ def register():
             flash('Username already taken.', 'danger')
             return render_template('register.html', form=form)
 
-        user = User(username=form.username.data, role='user')
+        # Ustaw domyślnie jako user — lub jako admin jeśli chcesz tymczasowo
+        user = User(username=form.username.data, role='admin')  # <- lub 'user'
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
         flash('User registered successfully!', 'success')
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
-
 
 
 @app.route('/logout', methods=['POST'])
