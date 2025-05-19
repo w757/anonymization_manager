@@ -4,6 +4,7 @@ import string
 from faker import Faker
 from datetime import datetime, timedelta
 from dateutil import parser
+import re
 
 
 def extract_year(date_string):
@@ -58,60 +59,137 @@ def add_noise_to_value(value, data_category):
 # UOGOLNIENIE DANYCH
 def generalize_value(value, data_category):
 
-    if data_category == 'birth_date':
-        print("a")
-        return extract_year(value)
+    if data_category == "age":
+        if isinstance(value, (int, float)):
+            return int(value // 10) * 10
 
-    elif data_category == 'postal_code':
-        return value[:3] + 'XXX'  # np. 01XXX
-    elif data_category == 'address':
-        return value.split(',')[0]  # np. tylko ulica bez miasta
-    elif data_category == 'phone':
-        return value[:3] + 'XXXXXXX'
-    elif data_category == 'email':
-        return value.split('@')[0][:3] + '***@***'
-   
+    elif data_category == "birth_date":   
+        if isinstance(value, str):
+            try:
+                value = datetime.strptime(value, "%Y-%m-%d")
+            except ValueError:
+                return value
+        if isinstance(value, datetime):
+            return str(value.year)
+
+
+    elif data_category == "postal_code":  
+        if isinstance(value, str) and "-" in value:
+            prefix = value.split("-")[0]
+            return f"{prefix}-000"
+
+    elif data_category == "salary":
+        if isinstance(value, (int, float)):
+            return int(value // 1000 +1) * 1000
+
+        # Uogólnienie adresu: zachowanie tylko miasta (pierwszego członu przed przecinkiem)
+    elif data_category == "address":
+        if isinstance(value, str):
+            # Usuń znane fragmenty typu "ul. Długa 5", "al. Jerozolimskie", itp.
+            known_prefixes = r"(ul\.?|al\.?|plac|pl\.?|os\.?|skr\.?|nr\.?|blok|bud\.)"
+            address = re.sub(rf"\b{known_prefixes}\b.*", "", value, flags=re.IGNORECASE).strip(", ").strip()
+
+            # Jeżeli po usunięciu nadal są przecinki – bierz pierwszą część (często miasto)
+            city = address.split(",")[0].strip()
+
+            # Jeżeli nadal zawiera spacje i wygląda jak "Miasto coś" – weź pierwszy wyraz
+            if " " in city:
+                city = city.split(" ")[0].strip()
+
+            # Kapitalizacja
+            return city.title()
+
+    # Dla pozostałych danych uogólnienie nie ma sensu (wysokość, pensja itp.)
+    return value
 
 
 # GENEROWANIE FALSZYWYCH DANYCH 
-def fake_value (value, data_category):
-    fake = Faker('pl_PL')
+from faker import Faker
+import random
 
+# GENEROWANIE FAŁSZYWYCH DANYCH
+def fake_value(value, data_category):
+    fake = Faker('pl_PL')
 
     if data_category == 'first_name':
         return fake.first_name()
+    
     elif data_category == 'last_name':
         return fake.last_name()
+    
     elif data_category == 'birth_date':
         new_birth_date = fake.date_of_birth(minimum_age=18, maximum_age=90)
         return new_birth_date.isoformat()
+    
     elif data_category == 'gender':
         return random.choice(['Male', 'Female', 'Other'])
+    
     elif data_category == 'pesel':
         return fake.pesel()
+    
     elif data_category == 'email':
         return fake.email()
+    
     elif data_category == 'phone':
         return fake.phone_number()
+    
     elif data_category == 'address':
         return fake.address().replace("\n", ", ")
+    
     elif data_category == 'street':
         return fake.street_name()
+    
     elif data_category == 'postal_code':
         return fake.postcode()
+    
     elif data_category == 'city':
         return fake.city()
+    
     elif data_category == 'country':
         return fake.country()
+    
+    elif data_category == 'password':
+        return fake.password(length=12, special_chars=True, digits=True, upper_case=True, lower_case=True)
+    
+    elif data_category == 'age':
+        return random.randint(18, 90)
+    
+    elif data_category == 'height':
+        return round(random.uniform(150.0, 200.0), 1)  # wzrost w cm
+    
+    elif data_category == 'salary':
+        return round(random.uniform(3000.0, 20000.0), 2)  # wynagrodzenie
+    
     elif data_category == 'login':
         return fake.user_name()
-    elif data_category == 'password':
-        return fake.password()
+    
     elif data_category == 'other':
         return "xxx"
+    
     else:
         return "xxx"
 
+
 # MASKOWANIE DANYCH 
 def mask_value(value, data_category):
-    return "***MASK***"
+    if isinstance(value, str):
+        masked = ''
+        for char in value:
+            if char.isalpha():
+                masked += 'x'
+            elif char.isdigit():
+                masked += '0'
+            else:
+                masked += char  # zachowaj znaki specjalne, spacje, przecinki itp.
+        return masked
+
+    elif isinstance(value, int):
+        return int('0' * len(str(value)))
+
+    elif isinstance(value, float):
+        # Zamaskuj część całkowitą i dziesiętną oddzielnie, zachowując strukturę
+        value_str = f"{value:.2f}"
+        masked = ''.join(['0' if c.isdigit() else c for c in value_str])
+        return float(masked)
+
+    return "****"  # dla innych typów danych jako fallback

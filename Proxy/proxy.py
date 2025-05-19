@@ -109,7 +109,6 @@ def anonymize_payload(data, path, method, is_response, service_uuid):
 def get_data_category(service_uuid, path, method, field_name, is_response):
     swagger = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
     if not swagger:
-       
         return None
 
     endpoint = Endpoint.query.filter_by(
@@ -118,8 +117,14 @@ def get_data_category(service_uuid, path, method, field_name, is_response):
         method=method.upper()
     ).first()
     
-    if not endpoint:
-        
+    if not endpoint:     
+        endpoint = Endpoint.query.filter_by(
+        swagger_id=swagger.id,
+        path = "/" + path,
+        method=method.upper()
+    ).first()
+
+    if not endpoint:     
         return None
 
     field = Field.query.filter_by(

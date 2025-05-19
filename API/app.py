@@ -102,11 +102,19 @@ class Users(Resource):
                 'id': user.id,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
+                'birth_date': user.birth_date,
+                'gender': user.gender,
+                'pesel': user.pesel,
                 'email': user.email,
                 'phone': user.phone,
                 'address': user.address,
+                'street': user.street,
+                'postal_code': user.postal_code,
                 'city': user.city,
-                'country': user.country
+                'country': user.country,
+                'age': user.age,
+                'height': user.height,
+                'salary': user.salary
             } for user in users
         ]
         return jsonify(users_data)
@@ -244,11 +252,19 @@ swagger_json = {
                                         "id": 1,
                                         "first_name": "Jan",
                                         "last_name": "Kowalski",
+                                        "birth_date": "1990-01-15",
+                                        "gender": "male",
+                                        "pesel": "90011512345",
                                         "email": "jan.kowalski@example.com",
                                         "phone": "+48123456789",
                                         "address": "ul. Przykładowa 123",
+                                        "street": "ul. Przykładowa 123",
+                                        "postal_code": "00-001",
                                         "city": "Warszawa",
-                                        "country": "Polska"
+                                        "country": "Polska",
+                                        "age": 34,
+                                        "height": 180.5,
+                                        "salary": 7500.00
                                     }
                                 ]
                             }
