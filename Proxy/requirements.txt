@@ -19,3 +19,5 @@ faker
 gender-guesser
 python-dateutil
 datetime
+flask-login
+flask-bcrypt

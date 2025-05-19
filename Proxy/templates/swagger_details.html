@@ -90,14 +90,16 @@
 
 <script>
 // Copy UUID functionality
-document.querySelector('.copy-uuid').addEventListener('click', function() {
-    const uuid = this.getAttribute('data-uuid');
-    navigator.clipboard.writeText(uuid).then(() => {
-        const originalHTML = this.innerHTML;
-        this.innerHTML = '<i class="bi bi-check"></i>';
-        setTimeout(() => {
-            this.innerHTML = originalHTML;
-        }, 2000);
+document.querySelectorAll('.copy-uuid').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const uuid = this.getAttribute('data-uuid');
+        navigator.clipboard.writeText(uuid).then(() => {
+            const originalHTML = this.innerHTML;
+            this.innerHTML = '<i class="bi bi-check"></i>';
+            setTimeout(() => {
+                this.innerHTML = originalHTML;
+            }, 2000);
+        });
     });
 });
 </script>

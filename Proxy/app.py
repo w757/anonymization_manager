@@ -3,11 +3,16 @@ import os
 import uuid
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization
+from models import db, SwaggerAPI, Endpoint, Field, AnonymizationMethod, FieldAnonymization, User
 from forms import SwaggerForm, AnonymizationForm
 import json
 #from data_identifier import analyze_field
 import secrets
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from forms import SwaggerForm, AnonymizationForm, LoginForm
+from flask_login import login_required, current_user
+from uuid import uuid4
+
 
 
 
@@ -40,6 +45,61 @@ def init_db():
                 db.session.commit()
 
 init_db()
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and user.check_password(form.password.data):
+            login_user(user)
+            flash('Logged in successfully!', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'danger')
+    return render_template('login.html', form=form)
+
+
+
+
+from forms import RegisterForm  # importuj formularz
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+    if form.validate_on_submit():
+        existing_user = User.query.filter_by(username=form.username.data).first()
+        if existing_user:
+            flash('Username already taken.', 'danger')
+            return render_template('register.html', form=form)
+
+        user = User(username=form.username.data, role='user')
+        user.set_password(form.password.data)
+        db.session.add(user)
+        db.session.commit()
+        flash('User registered successfully!', 'success')
+        return redirect(url_for('login'))
+    return render_template('register.html', form=form)
+
+
+
+@app.route('/logout', methods=['POST'])
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+
+
 
 def process_schema_fields(endpoint_id, properties, is_response=False):
     """Process fields from both request and response schemas"""
@@ -136,12 +196,19 @@ def parse_openapi(swagger, parsed_data):
 
 
 @app.route("/", methods=["GET", "POST"])
+@login_required
 def index():
     form = SwaggerForm()
+
+    if request.method == "GET":
+        form.service_uuid.data = str(uuid4())
+
     if form.validate_on_submit():
         try:
             parsed_data = json.loads(form.swagger_json.data)
-            if SwaggerAPI.query.filter_by(api_url=form.api_url.data).first():
+
+            # Sprawdź, czy user już dodał to API
+            if SwaggerAPI.query.filter_by(api_url=form.api_url.data, user_id=current_user.id).first():
                 flash("API URL already exists!", "warning")
                 return redirect(url_for("index"))
 
@@ -149,7 +216,8 @@ def index():
                 api_url=form.api_url.data,
                 service_uuid=form.service_uuid.data,
                 raw_json=form.swagger_json.data,
-                encryption_key=secrets.token_hex(32)  # Dodaj klucz szyfrowania
+                encryption_key=secrets.token_hex(32),
+                user_id=current_user.id  # Przypisz użytkownika
             )
             db.session.add(swagger)
             db.session.commit()
@@ -162,7 +230,10 @@ def index():
         except Exception as e:
             flash(f"Error: {str(e)}", "danger")
 
-    return render_template("index.html", form=form, swaggers=SwaggerAPI.query.all())
+    # Pokazuj tylko konfiguracje zalogowanego użytkownika
+    user_swaggers = SwaggerAPI.query.filter_by(user_id=current_user.id).all()
+
+    return render_template("index.html", form=form, swaggers=user_swaggers)
 
 
 

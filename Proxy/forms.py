@@ -1,10 +1,13 @@
 
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField
-from wtforms.validators import DataRequired, URL, Optional
+from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField,PasswordField
+from wtforms.validators import DataRequired, URL, Optional, EqualTo, Length
 from models import AnonymizationMethod, db
 import uuid
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired
 
 class SwaggerForm(FlaskForm):
     """Form to upload Swagger JSON."""
@@ -31,7 +34,23 @@ DATA_CATEGORIES = [
     ('age', 'Age'),
     ('height', 'Height'),
     ('salary', 'Salary')
+    
 ]
+
+
+
+class RegisterForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=25)])
+    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
+    confirm_password = PasswordField('Confirm Password', validators=[
+        DataRequired(), EqualTo('password', message='Passwords must match')
+    ])
+    submit = SubmitField('Register')
+
+class LoginForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    submit = SubmitField('Login')
 
 class AnonymizationForm(FlaskForm):
     """Form to select an anonymization method for a specific field."""
