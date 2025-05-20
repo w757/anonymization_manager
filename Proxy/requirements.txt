@@ -21,3 +21,4 @@ python-dateutil
 datetime
 flask-login
 flask-bcrypt
+pycryptodome

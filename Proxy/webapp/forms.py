@@ -1,13 +1,8 @@
-
-
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField,PasswordField
+from wtforms import StringField, TextAreaField, SelectField, SubmitField, HiddenField, PasswordField
 from wtforms.validators import DataRequired, URL, Optional, EqualTo, Length
 from common.models import AnonymizationMethod, db
 import uuid
-from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField
-from wtforms.validators import DataRequired
 
 class SwaggerForm(FlaskForm):
     """Form to upload Swagger JSON."""
@@ -16,27 +11,26 @@ class SwaggerForm(FlaskForm):
     service_uuid = HiddenField("Service UUID", default=lambda: str(uuid.uuid4()))
     submit = SubmitField("Upload")
 
-DATA_CATEGORIES = [
-    ('', '-- Select data category --'),
-    ('first_name', 'First name'),
-    ('last_name', 'Last name'),
-    ('birth_date', 'Birth date'),
-    ('gender', 'Gender'),
-    ('pesel', 'PESEL'),
-    ('email', 'Email'),
-    ('phone', 'Phone number'),
-    ('address', 'Address'),
-    ('street', 'Street'),
-    ('postal_code', 'Postal code'),
-    ('city', 'City'),
-    ('country', 'Country'),
-    ('password', 'Password'),
-    ('age', 'Age'),
-    ('height', 'Height'),
-    ('salary', 'Salary')
+# DATA_CATEGORIES = [
+#     ('', '-- Select data category --'),
+#     ('first_name', 'First name'),
+#     ('last_name', 'Last name'),
+#     ('birth_date', 'Birth date'),
+#     ('gender', 'Gender'),
+#     ('pesel', 'PESEL'),
+#     ('email', 'Email'),
+#     ('phone', 'Phone number'),
+#     ('address', 'Address'),
+#     ('street', 'Street'),
+#     ('postal_code', 'Postal code'),
+#     ('city', 'City'),
+#     ('country', 'Country'),
+#     ('password', 'Password'),
+#     ('age', 'Age'),
+#     ('height', 'Height'),
+#     ('salary', 'Salary')
     
-]
-
+# ]
 
 
 class RegisterForm(FlaskForm):
@@ -56,19 +50,19 @@ class AnonymizationForm(FlaskForm):
     """Form to select an anonymization method for a specific field."""
     category = SelectField(
         "Category",
-        choices=[],  # Początkowo puste, będzie wypełniane dynamicznie
+        choices=[], 
         validators=[DataRequired()]
     )
 
     anonymization_method = SelectField(
         "Anonymization Method",
-        choices=[],  # Początkowo puste
+        choices=[],  
         validators=[DataRequired()]
     )
 
     data_category = SelectField(
         "Data Category",
-        choices=DATA_CATEGORIES,
+        choices=[],
         validators=[Optional()]
     )
 
@@ -76,16 +70,8 @@ class AnonymizationForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Wypełnij kategorie
         self.category.choices = [
             ("Anonymization", "Anonymization"), 
             ("Pseudonymization", "Pseudonymization")
         ]
 
-    # def __init__(self, *args, **kwargs):
-    #     super().__init__(*args, **kwargs)
-    #     # Wypełnij kategorie
-    #     self.category.choices = [
-    #         ("Anonymization", "Anonymization"), 
-    #         ("pseudoanonimizacja", "Pseudoanonimizacja")
-    #     ]

@@ -1,26 +1,24 @@
 version: '3.8'
 
 services:
-  web:
-    build: .
+  webapp:
+    build:
+      context: .
+      dockerfile: Dockerfile.webapp
+    volumes:
+      - ./instance:/app/instance
     ports:
       - "5000:5000"
-    volumes:
-      - .:/app
     environment:
-      - FLASK_APP=app.py
       - FLASK_ENV=development
-      - SQLALCHEMY_DATABASE_URI=sqlite:////app/database.db
-    command: flask run --host=0.0.0.0
 
   proxy:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.proxy
+    volumes:
+      - ./instance:/app/instance
     ports:
       - "5001:5001"
-    volumes:
-      - .:/app
     environment:
-      - FLASK_APP=proxy.py
       - FLASK_ENV=development
-      - SQLALCHEMY_DATABASE_URI=sqlite:////app/database.db
-    command: flask run --host=0.0.0.0 --port=5001

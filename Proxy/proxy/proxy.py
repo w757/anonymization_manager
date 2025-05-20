@@ -21,4 +21,4 @@ if __name__ == '__main__':
     
     with app.app_context():
         db.create_all()  # To powinno być idempotentne, więc bezpieczne do wielokrotnego wywołania
-    app.run(port=5001, debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5001)
