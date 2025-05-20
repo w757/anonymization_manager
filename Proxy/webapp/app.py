@@ -1,14 +1,17 @@
 import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 
 from flask import Flask
 from config import Config
 from common.extensions import db, login_manager
-from views import register_blueprints
+from webapp.views import register_blueprints
 
 from flask import Flask
 from common.models import AnonymizationMethod
+
+from webapp.views.utils import seed_default_methods
 
 def create_app():
     app = Flask(__name__)
@@ -21,7 +24,7 @@ def create_app():
         db.create_all()
 
         if not AnonymizationMethod.query.first():
-            from views.utils import seed_default_methods
+            
             seed_default_methods()
 
     register_blueprints(app)

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
 from common.models import Field, AnonymizationMethod, FieldAnonymization
-from forms import AnonymizationForm
+from webapp.forms import AnonymizationForm
 from common.extensions import db
 import json
 

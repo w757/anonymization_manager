@@ -6,8 +6,9 @@ from .pseudonymization_methods import encrypt_value, hash_value
 
 # Główna funkcja anonimizujaca/pseudonimizujaca
 def apply_anonymization(value, method_name, service_uuid, data_category):
+    print(value, method_name, service_uuid, data_category)
     methods = {
-
+        
         #pseudonimizacja
         "Encryption": lambda v: encrypt_value(v, service_uuid, data_category), 
         "Hashing": lambda v: hash_value(v, service_uuid, data_category),

@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from forms import SwaggerForm
+from webapp.forms import SwaggerForm
 from common.models import SwaggerAPI, Endpoint, Field, FieldAnonymization
 from common.extensions import db
 from .utils import parse_openapi

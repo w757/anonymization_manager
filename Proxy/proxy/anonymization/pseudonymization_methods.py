@@ -9,6 +9,7 @@ import hashlib
 from hashlib import pbkdf2_hmac
 
 def hash_value(value, encryption_key, data_category):
+    
     if not encryption_key:
         return "HASH_KEY_MISSING"
     salt = encryption_key[:16].encode()  # sól: pierwsze 16 znaków klucza

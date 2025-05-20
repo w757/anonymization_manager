@@ -1,4 +1,4 @@
-from common.models import Field, FieldAnonymization, Endpoint
+from common.models import Field, FieldAnonymization, Endpoint, AnonymizationMethod
 from common.extensions import db
 
 def extract_schema_properties(schema):
@@ -62,7 +62,7 @@ def parse_openapi(swagger, parsed_data):
     db.session.commit()
 
 def seed_default_methods():
-    from models import AnonymizationMethod
+
     default_methods = [
         ("Noise", "Anonymization"),
         ("Generalization", "Anonymization"),
