@@ -20,9 +20,7 @@ def noise_percent():
 
 # DODAWANIE SZUMU DO DANYCH 
 def add_noise_to_value(value, data_category):
-    print (value)
-    print (data_category)
-    
+   
     if data_category in ["age", "height", "salary"]:
         if isinstance(value, (int)): 
             return round(value * noise_percent())
@@ -102,10 +100,6 @@ def generalize_value(value, data_category):
     # Dla pozostałych danych uogólnienie nie ma sensu (wysokość, pensja itp.)
     return value
 
-
-# GENEROWANIE FALSZYWYCH DANYCH 
-from faker import Faker
-import random
 
 # GENEROWANIE FAŁSZYWYCH DANYCH
 def fake_value(value, data_category):
