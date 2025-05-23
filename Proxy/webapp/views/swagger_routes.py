@@ -54,25 +54,6 @@ def swagger_details(id):
     endpoints = Endpoint.query.filter_by(swagger_id=id).all()
     return render_template("swagger_details.html", swagger=swagger, endpoints=endpoints)
 
-# @swagger_bp.route("/delete_swagger/<int:id>", methods=["POST"])
-# @login_required
-# def delete_swagger(id):
-#     swagger = SwaggerAPI.query.get_or_404(id)
-#     endpoints = Endpoint.query.filter_by(swagger_id=id).all()
-#     for endpoint in endpoints:
-#         fields = Field.query.filter_by(endpoint_id=endpoint.id).all()
-#         for field in fields:
-          
-#             FieldAnonymization.query.filter_by(field_id=field.id).delete()
-#             db.session.delete(field)
-#         db.session.delete(endpoint)
-
-#     db.session.delete(swagger)
-#     db.session.commit()
-
-#     flash("Swagger configuration deleted successfully!", "success")
-#     return redirect(url_for("swagger.index"))
-
 
 @swagger_bp.route("/delete_swagger/<int:id>", methods=["POST"])
 @login_required

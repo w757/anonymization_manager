@@ -3,8 +3,10 @@ from flask_login import login_user, logout_user
 from common.models import User
 from common.extensions import db, login_manager
 from webapp.forms import LoginForm, RegisterForm
+from flask_login import LoginManager
 
 auth_bp = Blueprint("auth", __name__)
+
 
 @login_manager.user_loader
 def load_user(user_id):
