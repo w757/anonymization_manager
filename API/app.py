@@ -34,6 +34,28 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.email}>'
 
+    # Dodana metoda to_dict() do łatwego serializowania obiektu użytkownika
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
+            'birth_date': self.birth_date,
+            'gender': self.gender,
+            'pesel': self.pesel,
+            'email': self.email,
+            'phone': self.phone,
+            'address': self.address,
+            'street': self.street,
+            'postal_code': self.postal_code,
+            'city': self.city,
+            'country': self.country,
+            'password': self.password, # Hasło jest teraz uwzględnione
+            'age': self.age,
+            'height': self.height,
+            'salary': self.salary
+        }
+
 with app.app_context():
     db.create_all()
 
@@ -97,50 +119,16 @@ class Login(Resource):
 class Users(Resource):
     def get(self):
         users = User.query.all()
-        users_data = [
-            {
-                'id': user.id,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'birth_date': user.birth_date,
-                'gender': user.gender,
-                'pesel': user.pesel,
-                'email': user.email,
-                'phone': user.phone,
-                'address': user.address,
-                'street': user.street,
-                'postal_code': user.postal_code,
-                'city': user.city,
-                'country': user.country,
-                'age': user.age,
-                'height': user.height,
-                'salary': user.salary
-            } for user in users
-        ]
+        # Użycie nowej metody to_dict() do serializacji wszystkich danych
+        users_data = [user.to_dict() for user in users]
         return jsonify(users_data)
 
 class GetUserByID(Resource):
     def get(self, user_id):
         user = User.query.get(user_id)
         if user:
-            user_data = {
-                'id': user.id,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'birth_date': user.birth_date,
-                'gender': user.gender,
-                'pesel': user.pesel,
-                'email': user.email,
-                'phone': user.phone,
-                'address': user.address,
-                'street': user.street,
-                'postal_code': user.postal_code,
-                'city': user.city,
-                'country': user.country,
-                'age': user.age,
-                'height': user.height,
-                'salary': user.salary
-            }
+            # Użycie nowej metody to_dict() do serializacji wszystkich danych
+            user_data = user.to_dict()
             return jsonify(user_data)
         else:
             return {'message': 'User not found'}, 404
@@ -164,12 +152,45 @@ app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 if not os.path.exists('static'):
     os.makedirs('static')
 
+# Zaktualizowany swagger_json, aby odzwierciedlał zwracanie hasła
+# Używamy definicji schematu dla User, aby uniknąć duplikowania
 swagger_json = {
     "openapi": "3.0.3",
     "info": {
         "title": "User Management API",
         "version": "1.0.0",
         "description": "API for managing user data with comprehensive personal information"
+    },
+    "components": {
+        "schemas": {
+            "User": {
+                "type": "object",
+                "properties": {
+                    "id": {"type": "integer"},
+                    "first_name": {"type": "string"},
+                    "last_name": {"type": "string"},
+                    "birth_date": {"type": "string"},
+                    "gender": {"type": "string"},
+                    "pesel": {"type": "string"},
+                    "email": {"type": "string"},
+                    "phone": {"type": "string"},
+                    "address": {"type": "string"},
+                    "street": {"type": "string"},
+                    "postal_code": {"type": "string"},
+                    "city": {"type": "string"},
+                    "country": {"type": "string"},
+                    "password": {"type": "string"}, # Dodano hasło do schematu
+                    "age": {"type": "integer"},
+                    "height": {"type": "number"},
+                    "salary": {"type": "number"}
+                },
+                "required": [
+                    "first_name", "last_name", "birth_date", "gender", "pesel",
+                    "email", "phone", "address", "street", "postal_code",
+                    "city", "country", "password", "age", "height", "salary"
+                ]
+            }
+        }
     },
     "paths": {
         "/register": {
@@ -180,30 +201,7 @@ swagger_json = {
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "first_name": {"type": "string"},
-                                    "last_name": {"type": "string"},
-                                    "birth_date": {"type": "string"},
-                                    "gender": {"type": "string"},
-                                    "pesel": {"type": "string"},
-                                    "email": {"type": "string"},
-                                    "phone": {"type": "string"},
-                                    "address": {"type": "string"},
-                                    "street": {"type": "string"},
-                                    "postal_code": {"type": "string"},
-                                    "city": {"type": "string"},
-                                    "country": {"type": "string"},
-                                    "password": {"type": "string"},
-                                    "age": {"type": "integer"},
-                                    "height": {"type": "number"},
-                                    "salary": {"type": "number"}
-                                },
-                                "required": [
-                                    "first_name", "last_name", "birth_date", "gender", "pesel",
-                                    "email", "phone", "address", "street", "postal_code",
-                                    "city", "country", "password", "age", "height", "salary"
-                                ]
+                                "$ref": "#/components/schemas/User" # Odwołanie do definicji User
                             }
                         }
                     }
@@ -247,26 +245,12 @@ swagger_json = {
                         "description": "List of users returned successfully",
                         "content": {
                             "application/json": {
-                                "example": [
-                                    {
-                                        "id": 1,
-                                        "first_name": "Jan",
-                                        "last_name": "Kowalski",
-                                        "birth_date": "1990-01-15",
-                                        "gender": "male",
-                                        "pesel": "90011512345",
-                                        "email": "jan.kowalski@example.com",
-                                        "phone": "+48123456789",
-                                        "address": "ul. Przykładowa 123",
-                                        "street": "ul. Przykładowa 123",
-                                        "postal_code": "00-001",
-                                        "city": "Warszawa",
-                                        "country": "Polska",
-                                        "age": 34,
-                                        "height": 180.5,
-                                        "salary": 7500.00
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User" # Odwołanie do definicji User
                                     }
-                                ]
+                                }
                             }
                         }
                     }
@@ -291,23 +275,8 @@ swagger_json = {
                         "description": "User details returned successfully",
                         "content": {
                             "application/json": {
-                                "example": {
-                                    "id": 1,
-                                    "first_name": "Jan",
-                                    "last_name": "Kowalski",
-                                    "birth_date": "1990-01-15",
-                                    "gender": "male",
-                                    "pesel": "90011512345",
-                                    "email": "jan.kowalski@example.com",
-                                    "phone": "+48123456789",
-                                    "address": "ul. Przykładowa 123",
-                                    "street": "ul. Przykładowa 123",
-                                    "postal_code": "00-001",
-                                    "city": "Warszawa",
-                                    "country": "Polska",
-                                    "age": 34,
-                                    "height": 180.5,
-                                    "salary": 7500.00
+                                "schema": {
+                                    "$ref": "#/components/schemas/User" # Odwołanie do definicji User
                                 }
                             }
                         }
@@ -333,4 +302,3 @@ with open('static/swagger.json', 'w') as f:
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080, debug=True)
-

@@ -5,37 +5,34 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from flask import Blueprint, request, make_response, current_app as app
 import json
 import requests
-from services import get_target_api_url, anonymize_payload
-
+from services import get_target_api_url, anonymize_payload, match_endpoint_from_db  # <-- nowa funkcja
 
 proxy_bp = Blueprint('proxy', __name__)
 
 
-# Request/response handlers
 @proxy_bp.before_app_request
 def before_request():
     """Anonymize incoming requests"""
     if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
         content_type = request.content_type or ''
-        
-        # Handle JSON requests
+        service_uuid = request.headers.get('X-Service-UUID')
+
+        # Ustal dopasowany szablon endpointu
+        template_path = match_endpoint_from_db(app, request.path, request.method, service_uuid) or request.path
+
         if 'application/json' in content_type and request.get_data():
             try:
                 data = request.get_json()
-                service_uuid = request.headers.get('X-Service-UUID')
-                anonymized_data = anonymize_payload(app, data, request.path, request.method, is_response=False, service_uuid=service_uuid)
+                anonymized_data = anonymize_payload(app, data, template_path, request.method, is_response=False, service_uuid=service_uuid)
                 request._cached_data = json.dumps(anonymized_data)
                 request._parsed_content_type = 'application/json'
             except json.JSONDecodeError as e:
                 print(f"Request JSON decode error: {e}")
-        
-        # Handle form data
+
         elif 'application/x-www-form-urlencoded' in content_type or 'multipart/form-data' in content_type:
             form_data = request.form.to_dict()
-            service_uuid = request.headers.get('X-Service-UUID')
-            anonymized_data = anonymize_payload(app, form_data, request.path, request.method, is_response=False, service_uuid=service_uuid)
+            anonymized_data = anonymize_payload(app, form_data, template_path, request.method, is_response=False, service_uuid=service_uuid)
             request.form = anonymized_data
-
 
 
 @proxy_bp.route('/', defaults={'path': ''}, methods=['GET', 'POST', 'PUT', 'PATCH', 'DELETE'])
@@ -58,7 +55,7 @@ def proxy(path):
             404, {'Content-Type': 'application/json'})
     
     target_url = f"{target_api_url.rstrip('/')}/{path.lstrip('/')}"
-    
+
     try:
         # Prepare request data
         request_data = None
@@ -80,16 +77,14 @@ def proxy(path):
             timeout=30
         )
 
-
-        # Anonymize response if JSON
         content_type = response.headers.get('Content-Type', '').lower()
+
         if 'application/json' in content_type and response.content:
             try:
                 response_data = response.json()
-                service_uuid = request.headers.get('X-Service-UUID')  # Get service_uuid from request
-                anonymized_data = anonymize_payload(app, 
-                    response_data, path, request.method, is_response=True, service_uuid=service_uuid)  # Pass service_uuid here
-                
+                # Ustal dopasowany szablon endpointu
+                template_path = match_endpoint_from_db(app, path, request.method, service_uuid) or path
+                anonymized_data = anonymize_payload(app, response_data, template_path, request.method, is_response=True, service_uuid=service_uuid)
                 return make_response(
                     json.dumps(anonymized_data),
                     response.status_code,
@@ -99,8 +94,6 @@ def proxy(path):
                 print(f"Response JSON decode error: {e}")
                 pass
 
-
-                
         return (response.content, response.status_code, response.headers.items())
     
     except requests.exceptions.RequestException as e:

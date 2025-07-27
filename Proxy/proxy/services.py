@@ -1,6 +1,9 @@
 import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+import re
+
+
 
 import json
 from sqlalchemy.orm import joinedload
@@ -126,3 +129,24 @@ def get_data_category(service_uuid, path, method, field_name, is_response):
     ).first()
 
     return field.data_category if field else None
+
+
+def match_endpoint_from_db(app, request_path, request_method, service_uuid):
+    """
+    Pobiera endpointy z bazy i próbuje dopasować path + metodę HTTP do wzorca (zawierającego {parametry})
+    """
+    with app.app_context():
+        swagger = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
+        if not swagger:
+            return None
+
+        for endpoint in swagger.endpoints:
+            if endpoint.method.upper() != request_method.upper():
+                continue
+
+            # Zamień np. "/api/employee/{employee_id}" → "^/api/employee/[^/]+$"
+            pattern = "^" + re.sub(r"\{[^/]+\}", r"[^/]+", endpoint.path) + "$"
+            if re.match(pattern, request_path):
+                return endpoint.path
+
+    return None

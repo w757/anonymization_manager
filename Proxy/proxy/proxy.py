@@ -16,9 +16,9 @@ app.register_blueprint(proxy_bp)
 
 
 if __name__ == '__main__':
-    # Użyj tej samej konfiguracji co główna aplikacja
+   
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(os.path.abspath(os.path.dirname(__file__)), '../instance/database.db')
     
     with app.app_context():
-        db.create_all()  # To powinno być idempotentne, więc bezpieczne do wielokrotnego wywołania
+        db.create_all()  
     app.run(debug=True, host='0.0.0.0', port=5001)

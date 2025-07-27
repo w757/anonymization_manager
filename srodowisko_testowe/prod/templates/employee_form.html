@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if employee_id %}Edytuj pracownika{% else %}Dodaj pracownika{% endif %}
+{% endblock %}
+
+{% block content %}
+    <h1>{% if employee_id %}Edytuj pracownika{% else %}Dodaj pracownika{% endif %}</h1>
+    
+    <div class="form-container">
+        <form id="employee-form" method="POST">
+            <input type="hidden" id="employee-id" value="{{ employee_id if employee_id else '' }}">
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="imie" class="form-label">Imię</label>
+                        <input name="imie" type="text" class="form-control" id="imie">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="nazwisko" class="form-label">Nazwisko</label>
+                        <input name="nazwisko" type="text" class="form-control" id="nazwisko">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="pesel" class="form-label">PESEL</label>
+                <input name="pesel" type="text" class="form-control" id="pesel">
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input name="email" type="text" class="form-control" id="email">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="telefon" class="form-label">Telefon</label>
+                        <input name="telefon" type="text" class="form-control" id="telefon">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="adres" class="form-label">Adres</label>
+                <input name="adres" type="text" class="form-control" id="adres">
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="stanowisko" class="form-label">Stanowisko</label>
+                        <input name="stanowisko" type="text" class="form-control" id="stanowisko">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="pensja_brutto" class="form-label">Pensja brutto</label>
+                        <input name="pensja_brutto" type="text" class="form-control" id="pensja_brutto">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">Zapisz</button>
+                <a href="{{ url_for('employee_list') }}" class="btn btn-secondary">Anuluj</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const employeeId = document.getElementById('employee-id').value;
+        
+        if (employeeId) {
+            fetch(`/api/employees/${employeeId}`)
+                .then(r => r.ok ? r.json() : Promise.reject('Fetch error'))
+                .then(data => {
+                    ['imie','nazwisko','pesel','email','telefon','adres','stanowisko','pensja_brutto']
+                        .forEach(f => document.getElementById(f).value = data[f]);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Błąd ładowania danych pracownika');
+                });
+        }
+
+        document.getElementById('employee-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const employeeData = {
+                imie: document.getElementById('imie').value,
+                nazwisko: document.getElementById('nazwisko').value,
+                pesel: document.getElementById('pesel').value,
+                email: document.getElementById('email').value,
+                telefon: document.getElementById('telefon').value,
+                adres: document.getElementById('adres').value,
+                stanowisko: document.getElementById('stanowisko').value,
+                pensja_brutto: document.getElementById('pensja_brutto').value
+            };
+            
+            const method = employeeId ? 'PUT' : 'POST';
+            const url = employeeId ? `/api/employees/${employeeId}` : '/api/employees';
+            
+            fetch(url, {
+                method,
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(employeeData)
+            })
+            .then(r => r.ok ? r.json() : r.json().then(err => Promise.reject(err)))
+            .then(() => window.location = "{{ url_for('employee_list') }}")
+            .catch(err => {
+                console.error(err);
+                alert('Błąd podczas zapisywania danych: ' + (err.error || err));
+            });
+        });
+    });
+</script>
+{% endblock %}

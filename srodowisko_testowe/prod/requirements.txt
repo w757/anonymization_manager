@@ -1,0 +1,6 @@
+Flask
+Flask-SQLAlchemy
+marshmallow
+marshmallow-sqlalchemy
+Flask-Cors
+requests

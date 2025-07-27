@@ -1,0 +1,147 @@
+
+
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Employee Management API - POST/PUT Methods",
+    "version": "1.0.0",
+    "description": "API do zarządzania danymi pracowników - operacje zapisu"
+  },
+  "paths": {
+    "/api/employees": {
+      "post": {
+        "summary": "Dodaj nowego pracownika",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imie": { "type": "string" },
+                  "nazwisko": { "type": "string" },
+                  "pesel": { "type": "string" },
+                  "email": { "type": "string" },
+                  "telefon": { "type": "string" },
+                  "adres": { "type": "string" },
+                  "stanowisko": { "type": "string" },
+                  "pensja_brutto": { "type": "number" }
+                },
+                "required": [
+                  "imie",
+                  "nazwisko",
+                  "pesel",
+                  "email",
+                  "telefon",
+                  "adres",
+                  "stanowisko",
+                  "pensja_brutto",
+                  "data_urodzenia"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Pracownik został pomyślnie dodany",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Employee created successfully",
+                  "id": 3
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji danych",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Validation error: missing or invalid fields"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/employees/{employee_id}": {
+      "put": {
+        "summary": "Aktualizuj dane pracownika",
+        "parameters": [
+          {
+            "name": "employee_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imie": { "type": "string" },
+                  "nazwisko": { "type": "string" },
+                  "pesel": { "type": "string" },
+                  "email": { "type": "string" },
+                  "telefon": { "type": "string" },
+                  "adres": { "type": "string" },
+                  "stanowisko": { "type": "string" },
+                  "pensja_brutto": { "type": "number" }
+                },
+                "required": [
+                  "imie",
+                  "nazwisko",
+                  "pesel",
+                  "email",
+                  "telefon",
+                  "adres",
+                  "stanowisko",
+                  "pensja_brutto",
+                  "data_urodzenia"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dane pracownika zostały pomyślnie zaktualizowane",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Employee updated successfully"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Pracownik nie został znaleziony",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Employee not found"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Błąd walidacji danych",
+            "content": {
+              "application/json": {
+                "example": {
+                  "message": "Validation error: missing or invalid fields"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

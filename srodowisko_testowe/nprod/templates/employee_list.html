@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Lista pracowników{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="mb-0">Lista pracowników</h1>
+        <a href="{{ url_for('employee_form') }}" class="btn btn-primary">Dodaj pracownika</a>
+    </div>  
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Imię</th>
+                    <th>Nazwisko</th>
+                    <th>PESEL</th>
+                    <th>Email</th>
+                    <th>Telefon</th>
+                    <th>Adres</th>
+                    <th>Stanowisko</th>
+                    <th>Pensja brutto</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody id="employees-table">
+                <!-- dane JS -->
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function formatDate(d){if(!d) return ''; return new Date(d).toLocaleDateString('pl-PL');}
+
+    function loadEmployees(){
+        fetch('/api/employees')
+            .then(r => r.ok ? r.json() : Promise.reject('Fetch failed'))
+            .then(data => {
+                const body = document.getElementById('employees-table');
+                body.innerHTML = '';
+                if(!data.length){
+                    body.innerHTML = '<tr><td colspan="6" class="text-center">Brak pracowników w bazie danych</td></tr>';
+                    return;
+                }
+                data.forEach(emp => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${emp.id}</td>
+                        <td>${emp.imie}</td>
+                        <td>${emp.nazwisko}</td>
+                        <td>${emp.pesel}</td>
+                        <td>${emp.email}</td>
+                        <td>${emp.telefon}</td>
+                        <td>${emp.adres}</td>
+                        <td>${emp.stanowisko}</td>
+                        <td>${emp.pensja_brutto} zł</td>
+                        <td class="action-buttons">
+                            <a href="{{ url_for('employee_form') }}?id=${emp.id}" class="btn btn-sm btn-warning">Edytuj</a>
+                        </td>
+                    `;
+                    body.appendChild(row);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('employees-table').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center text-danger">Błąd podczas ładowania danych</td>
+                    </tr>`;
+            });
+    }
+
+    document.addEventListener('DOMContentLoaded', loadEmployees);
+</script>
+{% endblock %}

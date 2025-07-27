@@ -5,7 +5,7 @@ from faker import Faker
 from datetime import datetime, timedelta
 from dateutil import parser
 import re
-
+import sys
 
 def extract_year(date_string):
     try:
@@ -20,8 +20,12 @@ def noise_percent():
 
 # DODAWANIE SZUMU DO DANYCH 
 def add_noise_to_value(value, data_category):
-   
     if data_category in ["age", "height", "salary"]:
+        try:
+            value = int(float(value))  
+        except (ValueError, TypeError):
+            return value  
+
         if isinstance(value, (int)): 
             return round(value * noise_percent())
         elif isinstance(value, (float)): 
@@ -56,8 +60,12 @@ def add_noise_to_value(value, data_category):
 
 # UOGOLNIENIE DANYCH
 def generalize_value(value, data_category):
-
     if data_category == "age":
+        try:
+            value = int(float(value))  
+        except (ValueError, TypeError):
+            return value  
+
         if isinstance(value, (int, float)):
             return int(value // 10) * 10
 
@@ -77,32 +85,34 @@ def generalize_value(value, data_category):
             return f"{prefix}-000"
 
     elif data_category == "salary":
-        if isinstance(value, (int, float)):
-            return int(value // 1000 +1) * 1000
+        try:
+            value = int(float(value))  
+        except (ValueError, TypeError):
+            return value  
 
-        # Uogólnienie adresu: zachowanie tylko miasta (pierwszego członu przed przecinkiem)
+        return int(value // 1000 + 1) * 1000
+
+       
     elif data_category == "address":
         if isinstance(value, str):
-            # Usuń znane fragmenty typu "ul. Długa 5", "al. Jerozolimskie", itp.
+            
             known_prefixes = r"(ul\.?|al\.?|plac|pl\.?|os\.?|skr\.?|nr\.?|blok|bud\.)"
             address = re.sub(rf"\b{known_prefixes}\b.*", "", value, flags=re.IGNORECASE).strip(", ").strip()
 
-            # Jeżeli po usunięciu nadal są przecinki – bierz pierwszą część (często miasto)
             city = address.split(",")[0].strip()
 
-            # Jeżeli nadal zawiera spacje i wygląda jak "Miasto coś" – weź pierwszy wyraz
             if " " in city:
                 city = city.split(" ")[0].strip()
 
             # Kapitalizacja
             return city.title()
 
-    # Dla pozostałych danych uogólnienie nie ma sensu (wysokość, pensja itp.)
     return value
 
 
 # GENEROWANIE FAŁSZYWYCH DANYCH
 def fake_value(value, data_category):
+    # print(f"fals -> data_category: {data_category}, value: {value}", flush=True)  # DEBUG
     fake = Faker('pl_PL')
 
     if data_category == 'first_name':
@@ -166,6 +176,7 @@ def fake_value(value, data_category):
 
 # MASKOWANIE DANYCH 
 def mask_value(value, data_category):
+    # print(f"mask -> data_category: {data_category}, value: {value}", flush=True)  # DEBUG
     if isinstance(value, str):
         masked = ''
         for char in value:

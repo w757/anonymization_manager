@@ -1,13 +1,14 @@
 
 from .anonymization_methods import add_noise_to_value, generalize_value, fake_value, mask_value
 from .pseudonymization_methods import encrypt_value, hash_value
+import sys
 
 
 
 # Główna funkcja anonimizujaca/pseudonimizujaca
 def apply_anonymization(value, method_name, service_uuid, data_category):
+    print("Debug info", file=sys.stderr, flush=True)
     methods = {
-        
         #pseudonimizacja
         "Encryption": lambda v: encrypt_value(v, service_uuid, data_category), 
         "Hashing": lambda v: hash_value(v, service_uuid, data_category),
