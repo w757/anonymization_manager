@@ -1,3 +1,10 @@
 Proxy/instance/
 Proxy/myenv/
 Proxy/__pycache__/
+API/instance/
+API/myenv/
+API/__pycache__/
+srodowisko_testowe/nprod/venv/
+srodowisko_testowe/nprod/__pycache__/
+srodowisko_testowe/prod/venv/
+srodowisko_testowe/prod/__pycache__/

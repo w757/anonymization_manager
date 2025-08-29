@@ -13,13 +13,15 @@ def extract_year(date_string):
         parsed_date = parser.parse(date_string)
         return parsed_date.year
     except ValueError:
-        return None  # Jeśli nie uda się sparsować daty
+        return None
 
 def noise_percent():
     return random.uniform(0.8, 1.2)
 
+
 # DODAWANIE SZUMU DO DANYCH 
 def add_noise_to_value(value, data_category):
+    #WIEK, WZROST, WYNAGRODZENIE
     if data_category in ["age", "height", "salary"]:
         try:
             value = int(float(value))  
@@ -32,6 +34,7 @@ def add_noise_to_value(value, data_category):
             return round(value * noise_percent(),2)
     
 
+    #DATY
     elif data_category == "birth_date":
             input_type = type(value)
             
@@ -40,21 +43,19 @@ def add_noise_to_value(value, data_category):
                 try:
                     parsed_date = datetime.strptime(value, "%Y-%m-%d")
                 except ValueError:
-                    return value  # niepoprawny format - zwróć bez zmian
+                    return value  
             elif isinstance(value, datetime):
                 parsed_date = value
             else:
-                return value  # nieobsługiwany typ
+                return value
 
-            # Zakłócenie w zakresie 7–36 dni
-            days_noise = round(random.uniform(-108, 108))
+            # Zakłócenie w zakresie 200 dni
+            days_noise = round(random.uniform(-200, 200))
             noisy_date = parsed_date + timedelta(days=days_noise)
 
-            # Zwróć w tym samym formacie, w jakim podano wejście
             return noisy_date.strftime("%Y-%m-%d") if input_type == str else noisy_date
 
     else:
-        # Jeśli typ danych jest nieobsługiwany, zwróć oryginalną wartość
         return value 
 
 
@@ -104,7 +105,6 @@ def generalize_value(value, data_category):
             if " " in city:
                 city = city.split(" ")[0].strip()
 
-            # Kapitalizacja
             return city.title()
 
     return value
@@ -112,7 +112,6 @@ def generalize_value(value, data_category):
 
 # GENEROWANIE FAŁSZYWYCH DANYCH
 def fake_value(value, data_category):
-    # print(f"fals -> data_category: {data_category}, value: {value}", flush=True)  # DEBUG
     fake = Faker('pl_PL')
 
     if data_category == 'first_name':
@@ -159,10 +158,10 @@ def fake_value(value, data_category):
         return random.randint(18, 90)
     
     elif data_category == 'height':
-        return round(random.uniform(150.0, 200.0), 1)  # wzrost w cm
+        return round(random.uniform(150.0, 200.0), 1)  
     
     elif data_category == 'salary':
-        return round(random.uniform(3000.0, 20000.0), 2)  # wynagrodzenie
+        return round(random.uniform(3000.0, 20000.0), 2)  
     
     elif data_category == 'login':
         return fake.user_name()
@@ -176,7 +175,6 @@ def fake_value(value, data_category):
 
 # MASKOWANIE DANYCH 
 def mask_value(value, data_category):
-    # print(f"mask -> data_category: {data_category}, value: {value}", flush=True)  # DEBUG
     if isinstance(value, str):
         masked = ''
         for char in value:
@@ -185,16 +183,15 @@ def mask_value(value, data_category):
             elif char.isdigit():
                 masked += '0'
             else:
-                masked += char  # zachowaj znaki specjalne, spacje, przecinki itp.
+                masked += char 
         return masked
 
     elif isinstance(value, int):
         return int('0' * len(str(value)))
 
     elif isinstance(value, float):
-        # Zamaskuj część całkowitą i dziesiętną oddzielnie, zachowując strukturę
         value_str = f"{value:.2f}"
         masked = ''.join(['0' if c.isdigit() else c for c in value_str])
         return float(masked)
 
-    return "****"  # dla innych typów danych jako fallback
+    return "****"  # dla innych typów danych 

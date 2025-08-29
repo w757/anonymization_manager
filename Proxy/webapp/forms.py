@@ -11,27 +11,6 @@ class SwaggerForm(FlaskForm):
     service_uuid = HiddenField("Service UUID", default=lambda: str(uuid.uuid4()))
     submit = SubmitField("Upload")
 
-# DATA_CATEGORIES = [
-#     ('', '-- Select data category --'),
-#     ('first_name', 'First name'),
-#     ('last_name', 'Last name'),
-#     ('birth_date', 'Birth date'),
-#     ('gender', 'Gender'),
-#     ('pesel', 'PESEL'),
-#     ('email', 'Email'),
-#     ('phone', 'Phone number'),
-#     ('address', 'Address'),
-#     ('street', 'Street'),
-#     ('postal_code', 'Postal code'),
-#     ('city', 'City'),
-#     ('country', 'Country'),
-#     ('password', 'Password'),
-#     ('age', 'Age'),
-#     ('height', 'Height'),
-#     ('salary', 'Salary')
-    
-# ]
-
 
 class RegisterForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=3, max=25)])
@@ -41,10 +20,12 @@ class RegisterForm(FlaskForm):
     ])
     submit = SubmitField('Register')
 
+
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
+
 
 class AnonymizationForm(FlaskForm):
     """Form to select an anonymization method for a specific field."""

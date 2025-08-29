@@ -33,7 +33,7 @@ class Employee(db.Model):
             'pensja_brutto': self.pensja_brutto
         }
 
-#-------
+#---przesylanie zapytan do proxy----
 
 PROXY_BASE_URL = 'http://127.0.0.1:5001'
 SERVICE_UUID = '8ce2e876-723a-4a34-b6cf-77a9a0ea32fa' 
@@ -121,15 +121,6 @@ def employee_detail(emp_id):
         except Exception as e:
             db.session.rollback()
             raise BadRequest(f"Błąd aktualizacji: {e}")
-
-    # if request.method == 'DELETE':
-    #     try:
-    #         db.session.delete(emp)
-    #         db.session.commit()
-    #         return '', 204
-    #     except Exception as e:
-    #         db.session.rollback()
-    #         raise BadRequest(f"Błąd usuwania: {e}")
 
 if __name__ == '__main__':
     with app.app_context():

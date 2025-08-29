@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from flask import Blueprint, request, make_response, current_app as app
 import json
 import requests
-from services import get_target_api_url, anonymize_payload, match_endpoint_from_db  # <-- nowa funkcja
+from services import get_target_api_url, anonymize_payload, match_endpoint_from_db 
 
 proxy_bp = Blueprint('proxy', __name__)
 
@@ -57,14 +57,13 @@ def proxy(path):
     target_url = f"{target_api_url.rstrip('/')}/{path.lstrip('/')}"
 
     try:
-        # Prepare request data
         request_data = None
         if hasattr(request, '_cached_data'):
             request_data = request._cached_data
         elif request.get_data():
             request_data = request.get_data()
         
-        # Forward request to target API
+        # Przekazanie do docelowego API
         response = requests.request(
             method=request.method,
             url=target_url,
@@ -82,7 +81,6 @@ def proxy(path):
         if 'application/json' in content_type and response.content:
             try:
                 response_data = response.json()
-                # Ustal dopasowany szablon endpointu
                 template_path = match_endpoint_from_db(app, path, request.method, service_uuid) or path
                 anonymized_data = anonymize_payload(app, response_data, template_path, request.method, is_response=True, service_uuid=service_uuid)
                 return make_response(

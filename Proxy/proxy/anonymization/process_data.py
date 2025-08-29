@@ -7,7 +7,6 @@ import sys
 
 # Główna funkcja anonimizujaca/pseudonimizujaca
 def apply_anonymization(value, method_name, service_uuid, data_category):
-    print("Debug info", file=sys.stderr, flush=True)
     methods = {
         #pseudonimizacja
         "Encryption": lambda v: encrypt_value(v, service_uuid, data_category), 
@@ -21,7 +20,6 @@ def apply_anonymization(value, method_name, service_uuid, data_category):
         
     }
     
-
     # Zabezpieczenie przed błędnym typem
     if not isinstance(method_name, str):
         return value

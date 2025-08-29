@@ -22,7 +22,7 @@ def get_target_api_url(service_uuid, app):
 
 
 def get_endpoint_config(app, path, method, is_response):
-    """Get anonymization config for endpoint"""
+    # Pobierz konfigurację anonimizacji endpointu
     with app.app_context():
 
         base_path = path.split('?')[0].rstrip('/')
@@ -84,7 +84,7 @@ def anonymize_item(item, field_config, service_uuid, path, method, is_response):
 
 
 def anonymize_payload(app, data, path, method, is_response, service_uuid):
-    """Main anonymization function for both requests and responses"""
+    #Główna funkcja anonimizacji dla zapytan i odpowiedzi
     endpoint_config = get_endpoint_config(app, path, method, is_response)
     if not endpoint_config:
         return data
@@ -132,9 +132,8 @@ def get_data_category(service_uuid, path, method, field_name, is_response):
 
 
 def match_endpoint_from_db(app, request_path, request_method, service_uuid):
-    """
-    Pobiera endpointy z bazy i próbuje dopasować path + metodę HTTP do wzorca (zawierającego {parametry})
-    """
+    # Pobiera endpointy z bazy i próbuje dopasować path + metodę HTTP do wzorca (zawierającego {parametry})
+
     with app.app_context():
         swagger = SwaggerAPI.query.filter_by(service_uuid=service_uuid).first()
         if not swagger:

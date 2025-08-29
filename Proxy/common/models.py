@@ -2,7 +2,6 @@ from common.extensions import db
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
-
 class User(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
@@ -29,13 +28,13 @@ class SwaggerAPI(db.Model):
     user = db.relationship('User', backref=db.backref('swagger_apis', lazy=True))
 
 
-
 class Endpoint(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     swagger_id = db.Column(db.Integer, db.ForeignKey('swagger_api.id'), nullable=False)
     path = db.Column(db.String(255), nullable=False)
     method = db.Column(db.String(10), nullable=False)
     fields = db.relationship('Field', backref='endpoint', lazy=True)
+
 
 class Field(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -44,14 +43,16 @@ class Field(db.Model):
     data_type = db.Column(db.String(50), nullable=True)
     description = db.Column(db.Text, nullable=True)
     is_response_field = db.Column(db.Boolean, default=False)
-    data_category = db.Column(db.String(50), nullable=True)  # Nowe pole dla kategorii danych
+    data_category = db.Column(db.String(50), nullable=True)  
     anonymization = db.relationship('FieldAnonymization', backref='field', uselist=False)
-    
+
+
 class AnonymizationMethod(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
     category = db.Column(db.String(50), nullable=False)
+
 
 class FieldAnonymization(db.Model):
     id = db.Column(db.Integer, primary_key=True)
